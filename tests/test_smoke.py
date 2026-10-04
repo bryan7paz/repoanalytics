@@ -22,6 +22,17 @@ def logado(client):
     return id_usuario
 
 
+@pytest.fixture()
+def repo_logado(client, logado):
+    from database import (desvincular_e_limpar, link_usuario_repositorio,
+                          upsert_repositorio)
+    id_repo = upsert_repositorio("resumo-teste",
+                                 "https://github.com/teste-fap/resumo-teste.git")
+    link_usuario_repositorio(logado, id_repo)
+    yield id_repo
+    desvincular_e_limpar(logado, id_repo)
+
+
 def test_health_publico(client):
     assert client.get("/api/health").status_code == 200
 
@@ -120,6 +131,39 @@ def test_fluxo_logado_completo(client, logado):
     assert client.get("/repo/9999999").status_code == 403
     assert client.get("/api/repo/9999999/resumo").status_code == 403
     assert client.get("/api/repo/9999999/github").status_code == 403
+
+
+def test_resumo_padrao_sem_coleta(client, repo_logado):
+    resp = client.get(f"/api/repo/{repo_logado}/resumo")
+    assert resp.status_code == 200
+    dados = resp.get_json()
+    assert dados["janela"] is None
+    assert dados["commits_total"] == 0
+    assert dados["autores_periodo"] == []
+    assert dados["autores_linhas"] == []
+    assert dados["curva"] is not None
+
+
+@pytest.mark.parametrize("tipo,rotulo", [
+    ("1d", "último dia"),
+    ("7d", "últimos 7 dias"),
+    ("3m", "últimos 3 meses"),
+    ("6m", "últimos 6 meses"),
+])
+def test_resumo_seletor_de_periodo(client, repo_logado, tipo, rotulo):
+    resp = client.get(f"/api/repo/{repo_logado}/resumo?periodo={tipo}")
+    assert resp.status_code == 200
+    dados = resp.get_json()
+    assert dados["janela"]["tipo"] == tipo
+    assert dados["janela"]["rotulo"] == rotulo
+    assert dados["curva"] is not None
+
+
+def test_resumo_periodo_invalido_cai_no_padrao(client, repo_logado):
+    resp = client.get(f"/api/repo/{repo_logado}/resumo?periodo=batata")
+    assert resp.status_code == 200
+    dados = resp.get_json()
+    assert "tipo" not in (dados["janela"] or {})
 
 
 def test_comparar_sem_login_redireciona(client):

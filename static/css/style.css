@@ -341,6 +341,45 @@ body {
 .badge-gray { color: var(--ink-3); }
 .badge-red { border-color: #b91c1c; color: #b91c1c; background: rgba(185, 28, 28, .08); }
 
+/* ---------- seletor de período (dashboard) ---------- */
+.seletor-periodo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3xs);
+  margin: var(--space-2xs) 0 var(--space-s);
+}
+.seletor-lbl {
+  font-size: var(--step--2);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ink-3);
+  margin-right: var(--space-3xs);
+}
+.chip {
+  font-family: var(--font-sans);
+  font-size: var(--step--2);
+  padding: 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color var(--dur-fast), border-color var(--dur-fast), background var(--dur-fast);
+}
+.chip:hover { color: var(--accent); border-color: var(--accent); }
+.chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+  font-weight: 600;
+}
+.seletor-janela {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--ink-2);
+  margin-left: var(--space-2xs);
+}
+
 .form-edicao { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .form-edicao input[type="text"], .form-edicao input[type="url"] {
     flex: 1 1 200px; min-width: 160px; padding: .45rem .6rem;

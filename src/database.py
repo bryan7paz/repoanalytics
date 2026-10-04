@@ -424,6 +424,30 @@ def usuario_dono(id_usuario, id_repositorio):
             return cur.fetchone() is not None
 
 
+def autores_linhas(id_repositorio, limite=5):
+    """Top autores com estatísticas de linhas (visão macro do gestor).
+
+    Retorna lista ordenada por commits desc: [{"autor", "commits",
+    "linhas_adicionadas", "linhas_removidas", "linhas_reescritas"}, ...]
+    """
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT autor, commits, linhas_adicionadas, linhas_removidas,
+                       linhas_reescritas
+                FROM Metrica_Autor_Linhas
+                WHERE id_repositorio = %s
+                ORDER BY commits DESC, linhas_adicionadas DESC
+                LIMIT %s
+                """,
+                (id_repositorio, limite),
+            )
+            cols = ["autor", "commits", "linhas_adicionadas",
+                    "linhas_removidas", "linhas_reescritas"]
+            return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
 def repositorio_por_id(id_repositorio):
     with connection() as conn:
         with conn.cursor() as cur:
@@ -511,6 +535,65 @@ def insert_metrica_autor_mensal(df: pd.DataFrame, id_repositorio: int,
                      for r in df.itertuples()],
                 )
     log.info("Metrica_Autor_Mensal atualizada para o repo %d.", id_repositorio)
+
+
+def insert_metrica_autor_linhas(df: pd.DataFrame, id_repositorio: int):
+    """Substitui as estatísticas por autor de um repositório (limpa e recarrega).
+
+    Espera colunas: autor, commits, linhas_adicionadas, linhas_removidas,
+    linhas_reescritas.
+    """
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM Metrica_Autor_Linhas WHERE id_repositorio = %s",
+                (id_repositorio,),
+            )
+            if not df.empty:
+                cur.executemany(
+                    """
+                    INSERT INTO Metrica_Autor_Linhas
+                        (id_repositorio, autor, commits, linhas_adicionadas,
+                         linhas_removidas, linhas_reescritas)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (id_repositorio, autor)
+                    DO UPDATE SET commits = EXCLUDED.commits,
+                        linhas_adicionadas = EXCLUDED.linhas_adicionadas,
+                        linhas_removidas = EXCLUDED.linhas_removidas,
+                        linhas_reescritas = EXCLUDED.linhas_reescritas
+                    """,
+                    [(id_repositorio, r.autor, int(r.commits),
+                      int(r.linhas_adicionadas), int(r.linhas_removidas),
+                      int(r.linhas_reescritas))
+                     for r in df.itertuples()],
+                )
+    log.info("Metrica_Autor_Linhas atualizada para o repo %d.", id_repositorio)
+
+
+def insert_metrica_autor_dia(df: pd.DataFrame, id_repositorio: int):
+    """Substitui a série diária por autor de um repositório (limpa e recarrega).
+
+    Espera colunas: dia (date), autor, commits.
+    """
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM Metrica_Autor_Dia WHERE id_repositorio = %s",
+                (id_repositorio,),
+            )
+            if not df.empty:
+                cur.executemany(
+                    """
+                    INSERT INTO Metrica_Autor_Dia
+                        (id_repositorio, dia, autor, commits)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (id_repositorio, dia, autor)
+                    DO UPDATE SET commits = EXCLUDED.commits
+                    """,
+                    [(id_repositorio, r.dia, r.autor, r.commits)
+                     for r in df.itertuples()],
+                )
+    log.info("Metrica_Autor_Dia atualizada para o repo %d.", id_repositorio)
 
 
 def insert_metrica_sustentabilidade(df: pd.DataFrame):

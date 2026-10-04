@@ -10,6 +10,8 @@ from config import MESES_ANALISE, PROJ_ROOT
 from database import (
     get_repositorios,
     insert_metrica_autor_mensal,
+    insert_metrica_autor_linhas,
+    insert_metrica_autor_dia,
     insert_metrica_diaria,
     insert_metrica_sustentabilidade_commits,
 )
@@ -128,6 +130,34 @@ def agregar_por_mes_autor(df: pd.DataFrame) -> pd.DataFrame:
     return g
 
 
+def agregar_por_dia_autor(df: pd.DataFrame) -> pd.DataFrame:
+    """Agrupa commits por dia e autor — visão "quem comitou naquele dia"."""
+    if df.empty:
+        return pd.DataFrame(columns=["dia", "autor", "commits"])
+    g = df.groupby(["dia", "autor"]).size().reset_index(name="commits")
+    return g
+
+
+def agregar_por_autor_linhas(df: pd.DataFrame) -> pd.DataFrame:
+    """Agrega por autor: commits, linhas adicionadas, removidas e reescritas.
+
+    Linhas "reescritas" aproximam o código modificado nas duas direções no
+    mesmo commit (min de added/deleted por commit) — visão macro do gestor.
+    """
+    if df.empty:
+        return pd.DataFrame(columns=["autor", "commits", "linhas_adicionadas",
+                                     "linhas_removidas", "linhas_reescritas"])
+    tmp = df.copy()
+    tmp["reescritas"] = tmp[["lines_added", "lines_deleted"]].min(axis=1)
+    g = tmp.groupby("autor").agg(
+        commits=("autor", "count"),
+        linhas_adicionadas=("lines_added", "sum"),
+        linhas_removidas=("lines_deleted", "sum"),
+        linhas_reescritas=("reescritas", "sum"),
+    ).reset_index()
+    return g
+
+
 def calcular_bus_factor(df: pd.DataFrame):
     """Menor k tal que a soma das k maiores contribuições > 50% do total."""
     if df.empty:
@@ -237,6 +267,12 @@ def executar(ids=None, inicio=None, fim=None):
 
             por_mes = agregar_por_mes_autor(df)
             insert_metrica_autor_mensal(por_mes, repo.id_repositorio, inicio)
+
+            por_autor = agregar_por_autor_linhas(df)
+            insert_metrica_autor_linhas(por_autor, repo.id_repositorio)
+
+            por_dia_autor = agregar_por_dia_autor(df)
+            insert_metrica_autor_dia(por_dia_autor, repo.id_repositorio)
 
             metricas_periodo.append(
                 {

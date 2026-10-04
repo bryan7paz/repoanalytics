@@ -123,7 +123,7 @@ def gerar_relatorio(dados):
     if png:
         doc.add_heading("Curva de concentração de conhecimento", level=1)
         doc.add_paragraph(
-            "Participação do top-3 (e top-1) de autores nos commits de cada mês."
+            "Participação do top-5 (e top-1) de autores nos commits de cada mês."
         )
         doc.add_picture(png, width=Inches(6.5))
 

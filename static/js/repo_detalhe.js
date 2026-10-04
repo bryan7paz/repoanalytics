@@ -1,5 +1,7 @@
 const PALETA = { accent: "#0f766e", tinta: "#334155", ocre: "#b45309", ink3: "#8b857c" };
 
+let PERIODO_RESUMO = "";
+
 function esc(str) {
     const el = document.createElement("span");
     el.textContent = str == null ? "" : String(str);
@@ -31,10 +33,36 @@ document.getElementById("tabs").addEventListener("click", (e) => {
     document.getElementById("aba-fap").hidden = btn.dataset.aba !== "fap";
 });
 
+/* ---------------- seletor de período ---------------- */
+document.querySelectorAll("#seletor-periodo .chip").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+        document.querySelectorAll("#seletor-periodo .chip")
+            .forEach((b) => b.classList.toggle("active", b === btn));
+        PERIODO_RESUMO = btn.dataset.periodo;
+        try {
+            await carregarResumo();
+        } catch (e) {
+            const badge = document.getElementById("badge-status");
+            badge.textContent = "falha ao carregar dados";
+            badge.className = "badge badge-red";
+        }
+    });
+});
+
+function renderJanela(janela) {
+    const el = document.getElementById("seletor-janela");
+    if (!el) return;
+    if (janela && janela.rotulo) el.textContent = `· ${janela.rotulo}`;
+    else if (janela && janela.inicio) el.textContent = `· ${janela.inicio} → ${janela.fim}`;
+    else el.textContent = "";
+}
+
 /* ---------------- resumo (banco) ---------------- */
 async function carregarResumo() {
-    const r = await fetch(`/api/repo/${window.REPO_ID}/resumo`).then(x => x.json());
+    const q = PERIODO_RESUMO ? `?periodo=${encodeURIComponent(PERIODO_RESUMO)}` : "";
+    const r = await fetch(`/api/repo/${window.REPO_ID}/resumo${q}`).then(x => x.json());
     if (r.erro) throw new Error(r.erro);
+    renderJanela(r.janela);
 
     const badge = document.getElementById("badge-status");
     badge.textContent = r.coletando ? "coletando…" : (r.metricas ? "dados prontos" : "sem dados");
@@ -58,6 +86,8 @@ async function carregarResumo() {
             hovertemplate: "%{x}<br>%{y} commits<extra></extra>",
         }], { ...LAYOUT_BASE, height: 300 },
            { responsive: true, displayModeBar: false });
+    } else {
+        Plotly.purge("graf-commits");
     }
 
     // autores no período
@@ -73,12 +103,15 @@ async function carregarResumo() {
               xaxis: { ...LAYOUT_BASE.xaxis, title: "" },
               margin: { t: 14, r: 16, b: 40, l: 140 } },
            { responsive: true, displayModeBar: false });
+    } else {
+        Plotly.purge("graf-autores");
     }
 
     renderMetricas(r.metricas);
     renderScore(r.score);
     renderCurva(r.curva);
     renderEvolucao(r.historico_score);
+    renderEquipe(r.autores_linhas);
 }
 
 /* ---------------- métricas ---------------- */
@@ -142,6 +175,44 @@ function renderEvolucao(historico) {
     }, { responsive: true, displayModeBar: false });
 }
 
+/* ---------------- quem faz o quê na equipe ---------------- */
+function renderEquipe(autores) {
+    if (!autores || !autores.length) {
+        document.getElementById("graf-equipe").innerHTML =
+            '<p class="muted" style="padding:24px">Sem estatísticas por autor ainda — colete os commits primeiro.</p>';
+        return;
+    }
+    const a = autores.slice().reverse();
+    Plotly.newPlot("graf-equipe", [
+        {
+            x: a.map(x => x.linhas_adicionadas),
+            y: a.map(x => x.autor),
+            name: "adicionadas", type: "bar", orientation: "h",
+            marker: { color: PALETA.accent },
+            hovertemplate: "%{y}<br>adicionadas: %{x} linhas<extra></extra>",
+        },
+        {
+            x: a.map(x => x.linhas_removidas),
+            y: a.map(x => x.autor),
+            name: "removidas", type: "bar", orientation: "h",
+            marker: { color: PALETA.ocre },
+            hovertemplate: "%{y}<br>removidas: %{x} linhas<extra></extra>",
+        },
+        {
+            x: a.map(x => x.linhas_reescritas),
+            y: a.map(x => x.autor),
+            name: "reescritas", type: "bar", orientation: "h",
+            marker: { color: "#7c6f64" },
+            hovertemplate: "%{y}<br>reescritas: %{x} linhas<extra></extra>",
+        },
+    ], { ...LAYOUT_BASE, height: Math.max(220, a.length * 40), bargap: 0.25,
+          xaxis: { ...LAYOUT_BASE.xaxis, title: "linhas" },
+          showlegend: true,
+          legend: { orientation: "h", x: 0, y: 1.14, font: { color: "#55504a" } },
+          margin: { t: 14, r: 16, b: 40, l: 140 } },
+       { responsive: true, displayModeBar: false });
+}
+
 /* ---------------- curva de concentração ---------------- */
 function renderCurva(curva) {
     if (!curva || !curva.length) {
@@ -151,10 +222,10 @@ function renderCurva(curva) {
     }
     Plotly.newPlot("graf-curva", [
         {
-            x: curva.map(c => c.mes), y: curva.map(c => c.top3),
-            name: "top-3", mode: "lines+markers",
+            x: curva.map(c => c.mes), y: curva.map(c => c.top5),
+            name: "top-5", mode: "lines+markers",
             line: { color: PALETA.accent, width: 2.4 },
-            hovertemplate: "%{x}<br>top-3: %{y}%<extra></extra>",
+            hovertemplate: "%{x}<br>top-5: %{y}%<extra></extra>",
         },
         {
             x: curva.map(c => c.mes), y: curva.map(c => c.top1),

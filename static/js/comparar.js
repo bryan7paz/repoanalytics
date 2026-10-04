@@ -86,11 +86,11 @@ function renderCurvas() {
         .filter(d => d.curva && d.curva.length)
         .map((d, i) => ({
             x: d.curva.map(c => c.mes),
-            y: d.curva.map(c => c.top3),
+            y: d.curva.map(c => c.top5),
             type: "scatter", mode: "lines+markers",
             name: d.repo.nome,
             line: { color: PALETA[i % PALETA.length], width: 2.2 },
-            hovertemplate: `${d.repo.nome}<br>%{x}<br>top-3: %{y}%<extra></extra>`,
+            hovertemplate: `${d.repo.nome}<br>%{x}<br>top-5: %{y}%<extra></extra>`,
         }));
     if (!traces.length) {
         document.getElementById("graf-curva-comp").innerHTML =

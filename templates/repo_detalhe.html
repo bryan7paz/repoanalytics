@@ -33,6 +33,16 @@
         <div class="kpi"><span class="kpi-val" id="kpi-autores">—</span><span class="kpi-lbl">autores no período</span></div>
     </div>
 
+    <div class="seletor-periodo" id="seletor-periodo">
+        <span class="seletor-lbl">período</span>
+        <button type="button" class="chip active" data-periodo="">padrão</button>
+        <button type="button" class="chip" data-periodo="1d">1 dia</button>
+        <button type="button" class="chip" data-periodo="7d">7 dias</button>
+        <button type="button" class="chip" data-periodo="3m">3 meses</button>
+        <button type="button" class="chip" data-periodo="6m">6 meses</button>
+        <span class="seletor-janela" id="seletor-janela"></span>
+    </div>
+
     <section class="panel">
         <div class="panel-head">
             <div>
@@ -74,6 +84,16 @@
         </div>
         <div id="graf-autores" class="chart chart-sm"></div>
     </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">Quem faz o quê na equipe</h2>
+                <p class="panel-desc">linhas adicionadas, removidas e reescritas por autor (top 5 por commits) — visão macro</p>
+            </div>
+        </div>
+        <div id="graf-equipe" class="chart chart-sm"></div>
+    </section>
 </section>
 
 <!-- ===================== Aba Análises FAP ===================== -->
@@ -106,7 +126,7 @@
         <div class="panel-head">
             <div>
                 <h2 class="panel-title">Curva de concentração de conhecimento</h2>
-                <p class="panel-desc">participação do top-3 de autores em cada mês (% dos commits) — análise exclusiva da FAP</p>
+                <p class="panel-desc">participação do top-5 de autores em cada mês (% dos commits) — análise exclusiva da FAP</p>
             </div>
         </div>
         <div id="graf-curva" class="chart chart-sm"></div>

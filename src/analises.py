@@ -1,6 +1,6 @@
 """Análises novas da FAP — contribuição além do que a API do GitHub expõe.
 
-1. Curva de concentração de conhecimento: participação do top-3 de autores
+1. Curva de concentração de conhecimento: participação do top-5 de autores
    em cada mês (em % dos commits do mês).
 2. Score de sustentabilidade (0–100): média dos componentes normalizados
    de atividade, Bus Factor, TTFR e churn relativo.
@@ -16,7 +16,7 @@ TETO_COMMITS = 1000    # 1000 commits/6 meses => atividade máxima
 TETO_BUS_FACTOR = 5    # BF >= 5 => concentração máxima distribuída
 PISO_TTFR_DIAS = 7     # TTFR >= 7 dias => score 0
 PISO_CHURN = 1.5       # churn relativo >= 1,5 => score 0
-TOP_AUTORES = 3
+TOP_AUTORES = 5
 
 # Limiar + mensagem para o alerta explicável de cada componente do score
 ALERTAS = {
@@ -33,10 +33,10 @@ def _limitar(valor):
 
 
 def curva_concentracao(id_repositorio, mes_inicio=None):
-    """Participação do top-3 de autores por mês (% dos commits do mês).
+    """Participação do top-5 de autores por mês (% dos commits do mês).
 
     mes_inicio (opcional): restringe a série à janela de análise.
-    Retorna lista ordenada: [{"mes": "2026-04", "top3": 62.5, "top1": 40.0,
+    Retorna lista ordenada: [{"mes": "2026-04", "top5": 62.5, "top1": 40.0,
                               "autores": 12, "commits": 180}, ...]
     """
     with connection() as conn:
@@ -62,13 +62,13 @@ def curva_concentracao(id_repositorio, mes_inicio=None):
         if not total:
             continue
         ordenado = g.sort_values("commits", ascending=False)
-        top3 = int(ordenado["commits"].head(TOP_AUTORES).sum())
+        top5 = int(ordenado["commits"].head(TOP_AUTORES).sum())
         top1 = int(ordenado["commits"].iloc[0])
         periodo = pd.Period(mes, freq="M") if not isinstance(mes, pd.Period) else mes
         serie.append(
             {
                 "mes": str(periodo),
-                "top3": round(top3 / total * 100, 1),
+                "top5": round(top5 / total * 100, 1),
                 "top1": round(top1 / total * 100, 1),
                 "autores": int(len(g)),
                 "commits": total,

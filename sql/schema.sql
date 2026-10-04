@@ -88,3 +88,32 @@ CREATE TABLE IF NOT EXISTS Metrica_Autor_Mensal (
     CONSTRAINT uq_rep_mes_autor UNIQUE (id_repositorio, mes, autor)
 );
 CREATE INDEX IF NOT EXISTS idx_autor_mes_rep ON Metrica_Autor_Mensal (id_repositorio);
+
+-- ============================================================
+-- VISÃO POR AUTOR (gestão da equipe)
+-- Linhas por autor — alimenta os gráficos "quem faz o quê"
+-- ============================================================
+CREATE TABLE IF NOT EXISTS Metrica_Autor_Linhas (
+    id_autor_linhas SERIAL PRIMARY KEY,
+    id_repositorio INTEGER NOT NULL REFERENCES Repositorio(id_repositorio) ON DELETE CASCADE,
+    autor          VARCHAR(200) NOT NULL,
+    commits        INTEGER DEFAULT 0,
+    linhas_adicionadas INTEGER DEFAULT 0,
+    linhas_removidas   INTEGER DEFAULT 0,
+    linhas_reescritas  INTEGER DEFAULT 0,
+    CONSTRAINT uq_rep_autor_linhas UNIQUE (id_repositorio, autor)
+);
+CREATE INDEX IF NOT EXISTS idx_autor_linhas_rep ON Metrica_Autor_Linhas (id_repositorio);
+
+-- ============================================================
+-- ATIVIDADE POR AUTOR E DIA (visão "quem comitou naquele dia")
+-- ============================================================
+CREATE TABLE IF NOT EXISTS Metrica_Autor_Dia (
+    id_autor_dia   SERIAL PRIMARY KEY,
+    id_repositorio INTEGER NOT NULL REFERENCES Repositorio(id_repositorio) ON DELETE CASCADE,
+    dia            DATE NOT NULL,
+    autor          VARCHAR(200) NOT NULL,
+    commits        INTEGER DEFAULT 0,
+    CONSTRAINT uq_rep_dia_autor UNIQUE (id_repositorio, dia, autor)
+);
+CREATE INDEX IF NOT EXISTS idx_autor_dia_rep ON Metrica_Autor_Dia (id_repositorio);

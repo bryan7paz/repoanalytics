@@ -25,7 +25,7 @@ from database import (connection, init_schema, repositorios_pendentes,
                       link_usuario_repositorio,
                       buscar_usuario, marcar_coletado,
                       resumo_repos_usuario, renomear_exibicao,
-                      atualizar_url_repo, marcar_pendente)
+                      atualizar_url_repo, marcar_pendente, autores_linhas)
 import status
 from collect.pydriller_collect import executar as coletar_code_churn
 from collect.github_metrics import (executar as coletar_metricas_sociais,
@@ -448,6 +448,18 @@ def _janela_exibicao(id_repositorio):
     return inicio, None
 
 
+JANELAS_RESUMO = {
+    "1d": ("último dia",
+           lambda: (pd.Timestamp.now() - pd.Timedelta(1, unit="D")).date()),
+    "7d": ("últimos 7 dias",
+           lambda: (pd.Timestamp.now() - pd.Timedelta(7, unit="D")).date()),
+    "3m": ("últimos 3 meses",
+           lambda: (pd.Timestamp.now() - pd.DateOffset(months=3)).date()),
+    "6m": ("últimos 6 meses",
+           lambda: (pd.Timestamp.now() - pd.DateOffset(months=6)).date()),
+}
+
+
 def _serie_diaria(id_repositorio, inicio):
     """Série dia a dia (commits, linhas +/−) desde `inicio`."""
     with connection() as conn:
@@ -535,26 +547,49 @@ def api_repo_resumo(id_repositorio):
     repo = repositorio_por_id(id_repositorio)
     if not repo:
         abort(404)
-    inicio, periodo = _janela_exibicao(id_repositorio)
+    inicio_padrao, janela_padrao = _janela_exibicao(id_repositorio)
+    p = request.args.get("periodo", "").strip()
+    if p in JANELAS_RESUMO:
+        rotulo, _calc = JANELAS_RESUMO[p]
+        inicio = _calc()
+        janela = {"tipo": p, "rotulo": rotulo}
+    else:
+        p = None
+        inicio, janela = inicio_padrao, janela_padrao
     serie = _serie_diaria(id_repositorio, inicio)
     with connection() as conn:
         autores = pd.read_sql(
             """
             SELECT autor, SUM(commits) AS commits
-            FROM Metrica_Autor_Mensal
-            WHERE id_repositorio = %s AND mes >= %s
-            GROUP BY autor ORDER BY commits DESC LIMIT 8
+            FROM Metrica_Autor_Dia
+            WHERE id_repositorio = %s AND dia >= %s
+            GROUP BY autor ORDER BY commits DESC LIMIT 5
             """,
             conn, params=(id_repositorio, inicio),
         )
+        if autores.empty and p is None:
+            autores = pd.read_sql(
+                """
+                SELECT autor, SUM(commits) AS commits
+                FROM Metrica_Autor_Mensal
+                WHERE id_repositorio = %s AND mes >= %s
+                GROUP BY autor ORDER BY commits DESC LIMIT 5
+                """,
+                conn, params=(id_repositorio, inicio),
+            )
 
     metricas = _metricas_latest(id_repositorio)
     commits_total = int(serie["commits"].sum()) if not serie.empty else 0
     add_total = int(serie["add"].sum()) if not serie.empty else 0
     del_total = int(serie["del"].sum()) if not serie.empty else 0
 
+    # score e curva falam do período coletado; o seletor recorta só a atividade
+    serie_padrao = serie if p is None else _serie_diaria(id_repositorio, inicio_padrao)
+    commits_score = (int(serie_padrao["commits"].sum())
+                     if not serie_padrao.empty else 0)
+
     score = analises.score_sustentabilidade({
-        "commits": commits_total if commits_total else None,
+        "commits": commits_score if commits_score else None,
         "bus_factor": metricas["bus_factor"] if metricas else None,
         "ttfr": metricas["ttfr"] if metricas else None,
         "churn_relativo": metricas["churn_relativo"] if metricas else None,
@@ -569,7 +604,7 @@ def api_repo_resumo(id_repositorio):
         "repo": repo,
         "coletando": coletando,
         "metricas": metricas,
-        "periodo": periodo,
+        "janela": janela,
         "commits_total": commits_total,
         "linhas_add": add_total,
         "linhas_del": del_total,
@@ -581,7 +616,8 @@ def api_repo_resumo(id_repositorio):
             {"autor": r.autor, "commits": int(r.commits)}
             for r in autores.itertuples()
         ],
-        "curva": analises.curva_concentracao(id_repositorio, inicio),
+        "autores_linhas": autores_linhas(id_repositorio),
+        "curva": analises.curva_concentracao(id_repositorio, inicio_padrao),
         "historico_score": _historico_score(id_repositorio),
         "score": score,
     })
