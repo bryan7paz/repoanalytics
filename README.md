@@ -42,12 +42,12 @@ mostra (Bus Factor, TTFR, churn relativo) mais **análises exclusivas**
    - **GitHub**: commits por dia, linhas +/-, autores, contribuidores e
      releases (API ao vivo);
    - **Análises FAP**: score 0–100 com barras de componentes e alertas
-     explicáveis, evolução do score, curva de concentração (top-1 e top-3
-     por mês) e métricas de sustentabilidade — com botão para baixar o
-     relatório `.docx`.
-4. No dashboard, marque 2+ repositórios para **comparar** (`/comparar`) ou
-   abra o **snapshot** (`/snapshot`): tabela consolidada por período coletado,
-   com números fixos e export CSV.
+      explicáveis, evolução do score, curva de concentração (top-1 e top-5
+      por mês) e métricas de sustentabilidade — com botão para baixar o
+      relatório `.docx`.
+   4. No dashboard, marque 2+ repositórios para **comparar** (`/comparar`) ou
+      abra o **snapshot** (`/snapshot`): tabela consolidada por período coletado,
+      com números fixos e export CSV e XML.
 
 ## Estrutura
 ```
@@ -170,7 +170,7 @@ app abre em `http://localhost:5000`. Os clones ficam num volume `dados-fap` e o
 banco num volume `postgres-dados` (sobrevivem a `docker compose down`).
 
 Endpoints principais:
-- `POST /repos` / `DELETE /repos/<id>` — CRUD dos repositórios do usuário
+- `POST /repos` / `PUT /repos/<id>` — CRUD dos repositórios do usuário
 - `GET /api/repos` — lista JSON (polling do dashboard)
 - `GET /api/repo/<id>/resumo` — série, autores, métricas, curva, histórico do
   score e score
@@ -179,6 +179,9 @@ Endpoints principais:
 - `GET /comparar?ids=1,2` — comparação lado a lado dos repositórios
 - `GET /snapshot` — tabela consolidada por período coletado (avaliável)
 - `GET /snapshot.csv?periodo=AAAAMMDD|AAAAMMDD` — export CSV do snapshot
+- `GET /snapshot.xml?periodo=AAAAMMDD|AAAAMMDD` — export XML do snapshot
+- `GET /api/repo/<id>/periodos` — períodos coletados do repositório
+  (base da comparação entre versões do mesmo projeto)
 - `GET /repo/<id>/relatorio` — relatório `.docx` (score, métricas, gráficos)
 - `POST /logout` — encerra a sessão (somente POST)
 - `GET /api/health` — verificação de vida
@@ -201,7 +204,7 @@ python -m collect.github_metrics       # TTFR, issues, releases, contribuidores
 | Churn relativo | (linhas add + del no período) / LOC do repositório |
 | Cadência de Releases | releases publicados por mês na janela (`R / M`) |
 | Contribuidores ativos | pessoas distintas que abriram ou comentaram issues no período (bots fora) |
-| Curva de concentração | % dos commits do mês feitos pelo top-1 e top-3 de autores |
+| Curva de concentração | % dos commits do mês feitos pelo top-1 e top-5 de autores |
 | Score (0–100) | média das componentes normalizadas: atividade (teto 1000 commits), Bus Factor (teto 5), responsividade (piso 7 dias de TTFR) e estabilidade (piso de churn 1,5); métricas ausentes não entram na média |
 
 Nota metodológica: commits e Bus Factor consideram somente autores humanos —
@@ -212,7 +215,7 @@ conforme a prática dos estudos de Truck Factor.
 ```bash
 pytest -q        # na raiz do projeto (precisa do PostgreSQL; CI roda os mesmos)
 ```
-Suíte (75 testes): score/curva (matemática pura), utilitários dos coletores,
+Suíte (100 testes): score/curva (matemática pura), utilitários dos coletores,
 rede mockada com `responses` (paginação, PRs, bots, rate limit, releases),
 helpers do banco (criptografia do token e upserts), autocoleta, relatório
 `.docx` e snapshot, e smoke das rotas com login simulado.

@@ -262,8 +262,7 @@ def executar(ids=None, inicio=None, fim=None):
 
             log.info("%d commits extraídos para %s", len(df), repo.nome)
 
-            if not agregado.empty:
-                insert_metrica_diaria(agregado)
+            insert_metrica_diaria(agregado, repo.id_repositorio, inicio, fim)
 
             por_mes = agregar_por_mes_autor(df)
             insert_metrica_autor_mensal(por_mes, repo.id_repositorio, inicio)

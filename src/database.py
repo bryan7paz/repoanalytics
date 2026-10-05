@@ -480,31 +480,45 @@ def ultimo_periodo(id_repositorio):
 # Métricas (ETL)
 # ---------------------------------------------------------------------------
 
-def insert_metrica_diaria(df: pd.DataFrame):
-    """Insere/atualiza métricas diárias (upsert por repo+dia)."""
-    if df.empty:
-        return
-    sql = """
-        INSERT INTO Metrica_Diaria
-            (id_repositorio, dia, commits, autores_distintos,
-             lines_added, lines_deleted)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        ON CONFLICT (id_repositorio, dia) DO UPDATE SET
-            commits = EXCLUDED.commits,
-            autores_distintos = EXCLUDED.autores_distintos,
-            lines_added = EXCLUDED.lines_added,
-            lines_deleted = EXCLUDED.lines_deleted,
-            atualizado_em = CURRENT_TIMESTAMP
+def insert_metrica_diaria(df: pd.DataFrame, id_repositorio: int,
+                          inicio, fim):
+    """Substitui a série diária de um repositório na janela (limpa e recarrega).
+
+    Dias da janela sem commits perdem as linhas antigas — evita que valores de
+    coletas anteriores (ex.: pré-filtro de bots) sobrevivam à re-coleta.
     """
-    rows = [
-        (
-            r.id_repositorio, r.dia, r.commits, r.autores_distintos,
-            r.lines_added, r.lines_deleted,
-        )
-        for r in df.itertuples()
-    ]
     with connection() as conn:
         with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM Metrica_Diaria "
+                "WHERE id_repositorio = %s AND dia BETWEEN %s AND %s",
+                (id_repositorio, inicio, fim),
+            )
+            if df.empty:
+                log.info(
+                    "Metrica_Diaria: janela %s..%s do repo %d sem commits.",
+                    inicio, fim, id_repositorio,
+                )
+                return
+            sql = """
+                INSERT INTO Metrica_Diaria
+                    (id_repositorio, dia, commits, autores_distintos,
+                     lines_added, lines_deleted)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id_repositorio, dia) DO UPDATE SET
+                    commits = EXCLUDED.commits,
+                    autores_distintos = EXCLUDED.autores_distintos,
+                    lines_added = EXCLUDED.lines_added,
+                    lines_deleted = EXCLUDED.lines_deleted,
+                    atualizado_em = CURRENT_TIMESTAMP
+            """
+            rows = [
+                (
+                    id_repositorio, r.dia, r.commits, r.autores_distintos,
+                    r.lines_added, r.lines_deleted,
+                )
+                for r in df.itertuples()
+            ]
             cur.executemany(sql, rows)
     log.info("%d linhas inseridas/atualizadas em Metrica_Diaria.", len(rows))
 

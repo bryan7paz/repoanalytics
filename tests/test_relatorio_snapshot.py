@@ -33,8 +33,8 @@ def _dados_completos():
         "totais": {"commits": 123, "linhas_add": 100, "linhas_del": 50},
         "serie": [{"dia": "2026-09-01", "commits": 3},
                   {"dia": "2026-09-02", "commits": 5}],
-        "curva": [{"mes": "2026-08", "top3": 70.0, "top1": 40.0},
-                  {"mes": "2026-09", "top3": 60.0, "top1": 30.0}],
+        "curva": [{"mes": "2026-08", "top5": 70.0, "top1": 40.0},
+                  {"mes": "2026-09", "top5": 60.0, "top1": 30.0}],
     }
 
 

@@ -34,13 +34,13 @@ def _png_commits(serie):
 
 
 def _png_curva(curva):
-    """Gráfico de linha: participação top-3 e top-1 por mês. BytesIO ou None."""
+    """Gráfico de linha: participação top-5 e top-1 por mês. BytesIO ou None."""
     if not curva:
         return None
     meses = [c["mes"] for c in curva]
     fig, ax = plt.subplots(figsize=(7, 2.6))
-    ax.plot(meses, [c["top3"] for c in curva], marker="o",
-            color="#0f766e", linewidth=2.0, label="top-3")
+    ax.plot(meses, [c["top5"] for c in curva], marker="o",
+            color="#0f766e", linewidth=2.0, label="top-5")
     ax.plot(meses, [c["top1"] for c in curva], marker="s",
             color="#b45309", linewidth=1.6, linestyle="--", label="top-1")
     ax.set_ylabel("% dos commits do mês")
