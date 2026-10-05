@@ -1,6 +1,6 @@
 # RepoAnalytics — Ferramenta de Acompanhamento de Projetos (FAP)
 
-[![lint](https://github.com/bryan7paz/Framework-Analytics-Platform/actions/workflows/lint.yml/badge.svg)](https://github.com/bryan7paz/Framework-Analytics-Platform/actions/workflows/lint.yml)
+[![lint](https://github.com/bryan7paz/repoanalytics/actions/workflows/lint.yml/badge.svg)](https://github.com/bryan7paz/repoanalytics/actions/workflows/lint.yml)
 
 Plataforma de **gestão de repositórios de software** para gestores de equipe:
 você cadastra o repositório do time e acompanha quem mais comita, quem mais
@@ -18,7 +18,7 @@ mostra (Bus Factor, TTFR, churn relativo) mais **análises exclusivas**
 
 ## Passo a passo (do zero)
 
-1. **Baixar**: `git clone https://github.com/bryan7paz/Framework-Analytics-Platform.git`
+1. **Baixar**: `git clone https://github.com/bryan7paz/repoanalytics.git`
    (ou **Code → Download ZIP** no GitHub e extrair)
 2. **Instalar**: dentro da pasta, `python setup.py` — cria o venv, instala as
    dependências, gera o `.env` (com `SESSION_SECRET` pronto), sobe o
