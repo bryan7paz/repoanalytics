@@ -15,7 +15,6 @@
     <div class="repo-header-acoes">
         <span class="badge" id="badge-status">carregando…</span>
         <a class="btn btn-primary" href="{{ url_for('repo_relatorio', id_repositorio=repo.id_repositorio) }}">baixar relatório</a>
-        <button class="btn btn-ghost" id="btn-remover" data-id="{{ repo.id_repositorio }}">remover</button>
     </div>
 </section>
 
@@ -120,6 +119,30 @@
             </div>
         </div>
         <div id="graf-evolucao" class="chart chart-sm"></div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">Comparar versões do projeto</h2>
+                <p class="panel-desc">duas coletas do mesmo repositório, lado a lado</p>
+            </div>
+        </div>
+        <div class="compara-selects" id="compara-selects" hidden>
+            <label class="campo">
+                <span>Versão A</span>
+                <select id="periodo-a"></select>
+            </label>
+            <label class="campo">
+                <span>Versão B</span>
+                <select id="periodo-b"></select>
+            </label>
+        </div>
+        <div class="table-wrap" id="compara-tabela" hidden>
+            <table class="index-table" id="tabela-periodos"></table>
+        </div>
+        <p class="muted" id="compara-vazio" hidden
+           style="padding: var(--space-s) 0">Faça pelo menos duas coletas para comparar versões.</p>
     </section>
 
     <section class="panel">

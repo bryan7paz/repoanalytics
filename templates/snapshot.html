@@ -42,6 +42,7 @@
             <p class="panel-desc">período {{ selecionado.replace('|', ' → ') }} · fixo/reproduzível</p>
         </div>
         <a class="btn btn-primary" href="{{ url_for('snapshot_csv') }}?periodo={{ selecionado }}">baixar CSV</a>
+        <a class="btn btn-ghost" href="{{ url_for('snapshot_xml') }}?periodo={{ selecionado }}">baixar XML</a>
     </div>
     <div class="table-wrap">
         <table class="index-table">

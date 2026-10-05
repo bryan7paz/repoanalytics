@@ -38,7 +38,7 @@ def test_health_publico(client):
 
 
 @pytest.mark.parametrize("rota", ["/", "/api/repos", "/api/coleta/status",
-                                  "/repo/1"])
+                                  "/repo/1", "/api/repo/1/periodos"])
 def test_rotas_protegidas_redirecionam_para_login(client, rota):
     resp = client.get(rota)
     assert resp.status_code == 302
@@ -164,6 +164,16 @@ def test_resumo_periodo_invalido_cai_no_padrao(client, repo_logado):
     assert resp.status_code == 200
     dados = resp.get_json()
     assert "tipo" not in (dados["janela"] or {})
+
+
+def test_periodos_logado_lista_vazia(client, repo_logado):
+    resp = client.get(f"/api/repo/{repo_logado}/periodos")
+    assert resp.status_code == 200
+    assert resp.get_json() == {"periodos": []}
+
+
+def test_periodos_outro_repo_403(client, logado):
+    assert client.get("/api/repo/9999999/periodos").status_code == 403
 
 
 def test_comparar_sem_login_redireciona(client):

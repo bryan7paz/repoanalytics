@@ -241,6 +241,72 @@ function renderCurva(curva) {
     }, { responsive: true, displayModeBar: false });
 }
 
+/* ---------------- comparação de versões (períodos coletados) ---------------- */
+let PERIODOS_REPO = [];
+
+async function carregarPeriodos() {
+    const d = await fetch(`/api/repo/${window.REPO_ID}/periodos`).then(x => x.json());
+    PERIODOS_REPO = d.periodos || [];
+    const vazio = document.getElementById("compara-vazio");
+    if (PERIODOS_REPO.length < 2) {
+        vazio.hidden = false;
+        return;
+    }
+    document.getElementById("compara-selects").hidden = false;
+    document.getElementById("compara-tabela").hidden = false;
+    const ops = PERIODOS_REPO.map((p, i) =>
+        `<option value="${i}">${esc(p.periodo_inicio)} → ${esc(p.periodo_fim)}</option>`
+    ).join("");
+    const selA = document.getElementById("periodo-a");
+    const selB = document.getElementById("periodo-b");
+    selA.innerHTML = ops;
+    selB.innerHTML = ops;
+    selA.value = String(PERIODOS_REPO.length - 2);
+    selB.value = String(PERIODOS_REPO.length - 1);
+    selA.addEventListener("change", renderComparacaoPeriodos);
+    selB.addEventListener("change", renderComparacaoPeriodos);
+    renderComparacaoPeriodos();
+}
+
+function renderComparacaoPeriodos() {
+    const a = PERIODOS_REPO[+document.getElementById("periodo-a").value];
+    const b = PERIODOS_REPO[+document.getElementById("periodo-b").value];
+    if (!a || !b) return;
+    const linhas = [
+        ["Commits", a.commits, b.commits, 0],
+        ["Score de sustentabilidade", a.score, b.score, 0],
+        ["Bus Factor", a.bus_factor, b.bus_factor, 0],
+        ["TTFR (dias)", a.ttfr, b.ttfr, 2],
+        ["Churn relativo", a.churn_relativo, b.churn_relativo, 3],
+        ["Cadência releases/mês", a.cadencia, b.cadencia, 2],
+        ["Contribuidores ativos", a.contribuidores, b.contribuidores, 0],
+        ["Issues abertas", a.issues_abertas, b.issues_abertas, 0],
+        ["Issues fechadas", a.issues_fechadas, b.issues_fechadas, 0],
+    ];
+    const fmt = (v, d) => v == null ? "—" : Number(v).toLocaleString("pt-BR",
+        { minimumFractionDigits: d, maximumFractionDigits: d });
+    const delta = (va, vb, d) => {
+        if (va == null || vb == null) return "—";
+        const dif = vb - va;
+        if (dif === 0) return "= 0";
+        return (dif > 0 ? "+" : "") + fmt(dif, d);
+    };
+    document.getElementById("tabela-periodos").innerHTML = `
+        <thead><tr>
+            <th>Indicador</th>
+            <th class="num">A · ${esc(a.periodo_inicio)} → ${esc(a.periodo_fim)}</th>
+            <th class="num">B · ${esc(b.periodo_inicio)} → ${esc(b.periodo_fim)}</th>
+            <th class="num">Δ (B − A)</th>
+        </tr></thead>
+        <tbody>${linhas.map(([rot, va, vb, d]) => `
+            <tr>
+                <td>${rot}</td>
+                <td class="num">${fmt(va, d)}</td>
+                <td class="num">${fmt(vb, d)}</td>
+                <td class="num">${delta(va, vb, d)}</td>
+            </tr>`).join("")}</tbody>`;
+}
+
 /* ---------------- contribuidores e releases (API ao vivo) ---------------- */
 async function carregarGithub() {
     const boxC = document.getElementById("lista-contribuidores");
@@ -269,19 +335,15 @@ async function carregarGithub() {
     }
 }
 
-/* ---------------- remover ---------------- */
-document.getElementById("btn-remover").addEventListener("click", async (e) => {
-    if (!confirm("Remover este repositório da sua lista?")) return;
-    const resp = await fetch("/repos/" + e.target.dataset.id, { method: "DELETE" });
-    if (resp.ok) window.location.href = "/";
-});
-
 carregarResumo().catch(e => {
     const badge = document.getElementById("badge-status");
     badge.textContent = "falha ao carregar dados";
     badge.className = "badge badge-amber";
 });
 carregarGithub();
+carregarPeriodos().catch(() => {
+    document.getElementById("compara-vazio").hidden = false;
+});
 
 // se a coleta estiver rodando para este repo, atualiza em loop
 (async function acompanharColeta() {

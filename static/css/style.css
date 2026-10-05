@@ -380,6 +380,15 @@ body {
   margin-left: var(--space-2xs);
 }
 
+/* ---------- comparação de períodos ---------- */
+.compara-selects {
+  display: flex;
+  gap: var(--space-s);
+  flex-wrap: wrap;
+  padding: var(--space-3xs) 0 var(--space-2xs);
+}
+.compara-selects .campo { flex: 1 1 240px; }
+
 .form-edicao { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .form-edicao input[type="text"], .form-edicao input[type="url"] {
     flex: 1 1 200px; min-width: 160px; padding: .45rem .6rem;

@@ -5,6 +5,7 @@ import logging
 import os
 import secrets
 import threading
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 import requests as rq
@@ -431,6 +432,50 @@ def _historico_score(id_repositorio):
     return historico
 
 
+def _periodos_do_repo(id_repositorio):
+    """Todos os períodos coletados do repo, com métricas e score (comparação)."""
+    with connection() as conn:
+        linhas = pd.read_sql(
+            """
+            SELECT ms.periodo_inicio, ms.periodo_fim, ms.ttfr_mediano_dias,
+                   ms.bus_factor, ms.churn_relativo, ms.issues_abertas,
+                   ms.issues_fechadas, ms.cadencia_releases,
+                   ms.contribuidores_ativos,
+                   COALESCE((
+                       SELECT SUM(d.commits) FROM Metrica_Diaria d
+                       WHERE d.id_repositorio = ms.id_repositorio
+                         AND d.dia BETWEEN ms.periodo_inicio AND ms.periodo_fim
+                   ), 0) AS commits
+            FROM Metrica_Sustentabilidade ms
+            WHERE ms.id_repositorio = %s
+            ORDER BY ms.periodo_inicio, ms.periodo_fim
+            """,
+            conn, params=(id_repositorio,),
+        )
+    periodos = []
+    for r in linhas.itertuples():
+        s = analises.score_sustentabilidade({
+            "commits": int(r.commits) if r.commits else None,
+            "bus_factor": _inteiro(r.bus_factor),
+            "ttfr": _num(r.ttfr_mediano_dias),
+            "churn_relativo": _num(r.churn_relativo),
+        })
+        periodos.append({
+            "periodo_inicio": str(r.periodo_inicio),
+            "periodo_fim": str(r.periodo_fim),
+            "commits": int(r.commits),
+            "bus_factor": _inteiro(r.bus_factor),
+            "ttfr": _num(r.ttfr_mediano_dias),
+            "churn_relativo": _num(r.churn_relativo),
+            "cadencia": _num(r.cadencia_releases),
+            "contribuidores": _inteiro(r.contribuidores_ativos),
+            "issues_abertas": _inteiro(r.issues_abertas),
+            "issues_fechadas": _inteiro(r.issues_fechadas),
+            "score": s["score"],
+        })
+    return periodos
+
+
 def _janela_exibicao(id_repositorio):
     """(inicio_filtro, periodo) das telas do repo.
 
@@ -537,6 +582,15 @@ def comparar():
         if d
     ]
     return render_template("comparar.html", dados=dados, meses=MESES_ANALISE)
+
+
+@app.route("/api/repo/<int:id_repositorio>/periodos")
+@login_required
+def api_repo_periodos(id_repositorio):
+    """Períodos coletados do repo com métricas — base da comparação de versões."""
+    if not usuario_dono(current_user.id, id_repositorio):
+        abort(403)
+    return jsonify({"periodos": _periodos_do_repo(id_repositorio)})
 
 
 @app.route("/api/repo/<int:id_repositorio>/resumo")
@@ -790,6 +844,40 @@ def snapshot_csv():
         mimetype="text/csv",
         headers={"Content-Disposition":
                  f"attachment; filename=snapshot-{ini}-a-{fim}.csv"},
+    )
+
+
+@app.route("/snapshot.xml")
+@login_required
+def snapshot_xml():
+    """Mesmo consolidado do CSV, em XML — mesmos campos, período fixo."""
+    pedido = _parse_periodo(request.args.get("periodo"))
+    if not pedido:
+        abort(400)
+    ini, fim = pedido
+    raiz = ET.Element("snapshot", {
+        "periodo_inicio": ini.isoformat(),
+        "periodo_fim": fim.isoformat(),
+        "gerado_em": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    })
+    campos = [("nome", "rotulo"), ("url", "url"), ("commits", "commits"),
+              ("bus_factor", "bus_factor"), ("ttfr_dias", "ttfr"),
+              ("churn_relativo", "churn_relativo"),
+              ("cadencia_releases_mes", "cadencia"),
+              ("issues_abertas", "issues_abertas"),
+              ("issues_fechadas", "issues_fechadas"), ("score", "score")]
+    for l in _linhas_snapshot(current_user.id, ini, fim):
+        no = ET.SubElement(raiz, "repositorio")
+        for tag, chave in campos:
+            valor = l[chave]
+            ET.SubElement(no, tag).text = "" if valor is None else str(valor)
+    ET.indent(raiz)
+    corpo = ET.tostring(raiz, encoding="unicode", xml_declaration=True)
+    return Response(
+        corpo,
+        mimetype="application/xml",
+        headers={"Content-Disposition":
+                 f"attachment; filename=snapshot-{ini}-a-{fim}.xml"},
     )
 
 

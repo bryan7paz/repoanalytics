@@ -89,6 +89,7 @@ def test_relatorio_route_owner_baixa_docx(client, repo_do_teste):
 def test_snapshot_sem_login(client):
     assert client.get("/snapshot").status_code == 302
     assert client.get("/snapshot.csv?periodo=2026-01-01%7C2026-07-01").status_code == 302
+    assert client.get("/snapshot.xml?periodo=2026-01-01%7C2026-07-01").status_code == 302
 
 
 def test_snapshot_logado_sem_periodos(client, repo_do_teste):
@@ -111,3 +112,19 @@ def test_snapshot_csv_com_periodo_valido(client, repo_do_teste):
     assert resp.status_code == 200
     texto = resp.get_data(as_text=True)
     assert texto.splitlines()[0].startswith("repositorio,")
+
+
+def test_snapshot_xml_sem_periodo_400(client, repo_do_teste):
+    assert client.get("/snapshot.xml").status_code == 400
+
+
+def test_snapshot_xml_com_periodo_valido(client, repo_do_teste):
+    resp = client.get("/snapshot.xml?periodo=2026-01-01|2026-07-01")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/xml"
+    texto = resp.get_data(as_text=True)
+    assert texto.startswith("<?xml")
+    assert 'periodo_inicio="2026-01-01"' in texto
+    assert 'periodo_fim="2026-07-01"' in texto
+    assert "<repositorio>" in texto
+    assert "<score" in texto
