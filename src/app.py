@@ -83,6 +83,33 @@ def _token_usuario():
 
 
 # ---------------------------------------------------------------------------
+# Erros HTTP: JSON para o front (chaves `erro`/`codigo`), página padrão nas telas
+# ---------------------------------------------------------------------------
+
+ERROS_HTTP = {
+    400: "Requisição inválida.",
+    403: "Você não tem permissão para este recurso.",
+    404: "Recurso não encontrado.",
+    405: "Método não suportado.",
+    500: "Erro interno do servidor.",
+}
+
+
+def _tratar_erro_http(e):
+    if request.path.startswith(("/api/", "/repos")):
+        return jsonify(erro=ERROS_HTTP.get(e.code, e.description),
+                       codigo=e.code), e.code
+    return e
+
+
+app.register_error_handler(400, _tratar_erro_http)
+app.register_error_handler(403, _tratar_erro_http)
+app.register_error_handler(404, _tratar_erro_http)
+app.register_error_handler(405, _tratar_erro_http)
+app.register_error_handler(500, _tratar_erro_http)
+
+
+# ---------------------------------------------------------------------------
 # Autenticação (OAuth GitHub)
 # ---------------------------------------------------------------------------
 

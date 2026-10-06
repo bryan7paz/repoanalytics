@@ -133,6 +133,22 @@ def test_fluxo_logado_completo(client, logado):
     assert client.get("/api/repo/9999999/github").status_code == 403
 
 
+def test_erro_api_devolve_json(client, logado):
+    resp = client.get("/api/repo/9999999/resumo")
+    assert resp.status_code == 403
+    assert resp.get_json() == {
+        "erro": "Você não tem permissão para este recurso.",
+        "codigo": 403,
+    }
+
+
+def test_erro_tela_continua_html(client):
+    resp = client.get("/rota-que-nao-existe")
+    assert resp.status_code == 404
+    assert resp.mimetype == "text/html"
+    assert resp.get_json() is None
+
+
 def test_resumo_padrao_sem_coleta(client, repo_logado):
     resp = client.get(f"/api/repo/{repo_logado}/resumo")
     assert resp.status_code == 200

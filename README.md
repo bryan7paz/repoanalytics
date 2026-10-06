@@ -83,7 +83,7 @@ fap/
 │   ├── repo_detalhe.html       # abas GitHub | Análises FAP + relatório
 │   ├── comparar.html           # comparação lado a lado
 │   └── snapshot.html           # snapshot consolidado por período
-├── tests/                      # 102 testes: rotas, coletores, banco, score...
+├── tests/                      # 104 testes: rotas, coletores, banco, score...
 └── static/
     ├── css/style.css           # token block (IBM Plex, tema claro)
     └── js/
@@ -223,7 +223,7 @@ conforme a prática dos estudos de Truck Factor.
 ```bash
 pytest -q        # na raiz do projeto (precisa do PostgreSQL; CI roda os mesmos)
 ```
-Suíte (102 testes): score/curva (matemática pura), utilitários dos coletores,
+Suíte (104 testes): score/curva (matemática pura), utilitários dos coletores,
 rede mockada com `responses` (paginação, PRs, bots, rate limit, releases),
 helpers do banco (criptografia do token e upserts), autocoleta, relatório
 `.docx` e snapshot, e smoke das rotas com login simulado.
