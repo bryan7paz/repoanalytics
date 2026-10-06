@@ -82,9 +82,8 @@ def _token_usuario():
     return GITHUB_TOKEN or None
 
 
-# ---------------------------------------------------------------------------
 # Erros HTTP: JSON para o front (chaves `erro`/`codigo`), página padrão nas telas
-# ---------------------------------------------------------------------------
+
 
 ERROS_HTTP = {
     400: "Requisição inválida.",
