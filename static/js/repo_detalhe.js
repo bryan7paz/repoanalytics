@@ -34,19 +34,49 @@ document.getElementById("tabs").addEventListener("click", (e) => {
 });
 
 /* ---------------- seletor de período ---------------- */
-document.querySelectorAll("#seletor-periodo .chip").forEach((btn) => {
+function marcarAtivo(alvo) {
+    document.querySelectorAll("#seletor-periodo .chip[data-periodo]")
+        .forEach((b) => b.classList.toggle("active", b === alvo));
+}
+
+async function aplicarPeriodo(valor) {
+    PERIODO_RESUMO = valor;
+    try {
+        await carregarResumo();
+    } catch (e) {
+        const badge = document.getElementById("badge-status");
+        badge.textContent = "falha ao carregar dados";
+        badge.className = "badge badge-red";
+    }
+}
+
+document.querySelectorAll("#seletor-periodo .chip[data-periodo]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-        document.querySelectorAll("#seletor-periodo .chip")
-            .forEach((b) => b.classList.toggle("active", b === btn));
-        PERIODO_RESUMO = btn.dataset.periodo;
-        try {
-            await carregarResumo();
-        } catch (e) {
-            const badge = document.getElementById("badge-status");
-            badge.textContent = "falha ao carregar dados";
-            badge.className = "badge badge-red";
-        }
+        marcarAtivo(btn);
+        document.getElementById("periodo-inicio").value = "";
+        document.getElementById("periodo-fim").value = "";
+        document.getElementById("periodo-aplicar").classList.remove("active");
+        await aplicarPeriodo(btn.dataset.periodo);
     });
+});
+
+document.getElementById("periodo-aplicar").addEventListener("click", async () => {
+    const ini = document.getElementById("periodo-inicio").value;
+    const fim = document.getElementById("periodo-fim").value;
+    const badge = document.getElementById("badge-status");
+    if (!ini || !fim) {
+        badge.textContent = "escolha as duas datas";
+        badge.className = "badge badge-amber";
+        return;
+    }
+    if (ini > fim) {
+        badge.textContent = "início depois do fim";
+        badge.className = "badge badge-amber";
+        return;
+    }
+    marcarAtivo(null);
+    document.getElementById("periodo-aplicar").classList.add("active");
+    await aplicarPeriodo(`${ini}|${fim}`);
 });
 
 function renderJanela(janela) {

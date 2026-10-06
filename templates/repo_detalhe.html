@@ -26,7 +26,7 @@
 <!-- ===================== Aba GitHub ===================== -->
 <section class="aba" id="aba-github">
     <div class="kpis" id="kpis">
-        <div class="kpi"><span class="kpi-val">—</span><span class="kpi-lbl">commits ({{ meses }}m)</span></div>
+        <div class="kpi"><span class="kpi-val">—</span><span class="kpi-lbl">commits no período</span></div>
         <div class="kpi"><span class="kpi-val">—</span><span class="kpi-lbl">linhas +</span></div>
         <div class="kpi"><span class="kpi-val">—</span><span class="kpi-lbl">linhas −</span></div>
         <div class="kpi"><span class="kpi-val" id="kpi-autores">—</span><span class="kpi-lbl">autores no período</span></div>
@@ -39,6 +39,12 @@
         <button type="button" class="chip" data-periodo="7d">7 dias</button>
         <button type="button" class="chip" data-periodo="3m">3 meses</button>
         <button type="button" class="chip" data-periodo="6m">6 meses</button>
+        <span class="seletor-custom">
+            <input type="date" id="periodo-inicio" aria-label="início do período">
+            <span class="seletor-seta" aria-hidden="true">→</span>
+            <input type="date" id="periodo-fim" aria-label="fim do período">
+            <button type="button" class="chip" id="periodo-aplicar">aplicar</button>
+        </span>
         <span class="seletor-janela" id="seletor-janela"></span>
     </div>
 
@@ -78,7 +84,7 @@
         <div class="panel-head">
             <div>
                 <h2 class="panel-title">Autores no período (FAP)</h2>
-                <p class="panel-desc">commits por autor nos últimos {{ meses }} meses — minerado localmente</p>
+                <p class="panel-desc">commits por autor no período selecionado — minerado localmente</p>
             </div>
         </div>
         <div id="graf-autores" class="chart chart-sm"></div>

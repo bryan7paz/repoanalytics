@@ -166,6 +166,25 @@ def test_resumo_periodo_invalido_cai_no_padrao(client, repo_logado):
     assert "tipo" not in (dados["janela"] or {})
 
 
+def test_resumo_periodo_personalizado(client, repo_logado):
+    resp = client.get(f"/api/repo/{repo_logado}/resumo"
+                      "?periodo=2026-01-01%7C2026-06-30")
+    assert resp.status_code == 200
+    dados = resp.get_json()
+    assert dados["janela"]["tipo"] == "custom"
+    assert dados["janela"]["inicio"] == "2026-01-01"
+    assert dados["janela"]["fim"] == "2026-06-30"
+
+
+def test_resumo_periodo_personalizado_invertido_cai_no_padrao(client,
+                                                              repo_logado):
+    resp = client.get(f"/api/repo/{repo_logado}/resumo"
+                      "?periodo=2026-06-30%7C2026-01-01")
+    assert resp.status_code == 200
+    dados = resp.get_json()
+    assert "tipo" not in (dados["janela"] or {})
+
+
 def test_periodos_logado_lista_vazia(client, repo_logado):
     resp = client.get(f"/api/repo/{repo_logado}/periodos")
     assert resp.status_code == 200

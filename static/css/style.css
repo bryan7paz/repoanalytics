@@ -379,6 +379,24 @@ body {
   color: var(--ink-2);
   margin-left: var(--space-2xs);
 }
+.seletor-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  margin-left: var(--space-2xs);
+}
+.seletor-custom input[type="date"] {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--ink-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 3px 6px;
+}
+.seletor-seta {
+  font-size: var(--step--2);
+  color: var(--ink-3);
+}
 
 /* ---------- comparação de períodos ---------- */
 .compara-selects {

@@ -39,12 +39,14 @@ mostra (Bus Factor, TTFR, churn relativo) mais **análises exclusivas**
    vincula ao usuário e dispara a coleta em background (polling em
    `/api/coleta/status`).
 3. Na página do repositório, duas abas:
-   - **GitHub**: commits por dia, linhas +/-, autores, contribuidores e
-     releases (API ao vivo);
+   - **GitHub**: commits por dia com seletor de período (1 dia, 7 dias, 3
+     meses ou 6 meses), linhas +/-, autores do período, quem faz o quê
+     (linhas por autor), contribuidores e releases (API ao vivo);
    - **Análises FAP**: score 0–100 com barras de componentes e alertas
-      explicáveis, evolução do score, curva de concentração (top-1 e top-5
-      por mês) e métricas de sustentabilidade — com botão para baixar o
-      relatório `.docx`.
+      explicáveis, evolução do score, comparação entre duas coletas do
+      mesmo repositório, curva de concentração (top-1 e top-5 por mês) e
+      métricas de sustentabilidade. O botão do relatório `.docx` fica no
+      topo da página.
    4. No dashboard, marque 2+ repositórios para **comparar** (`/comparar`) ou
       abra o **snapshot** (`/snapshot`): tabela consolidada por período coletado,
       com números fixos e export CSV e XML.
@@ -53,21 +55,25 @@ mostra (Bus Factor, TTFR, churn relativo) mais **análises exclusivas**
 ```
 fap/
 ├── requirements.txt
+├── setup.py                    # instalação guiada (venv, .env, banco, schema)
+├── rodar.bat                   # sobe o PostgreSQL + inicia o app (Windows)
 ├── Dockerfile                  # imagem (python:3.12-slim + git p/ PyDriller)
 ├── docker-compose.yml          # app + postgres:16 com volumes
 ├── .env.example                # -> copie para .env e preencha
+├── conftest.py + pytest.ini    # raiz da suíte de testes (100)
+├── .github/workflows/lint.yml  # CI: pyflakes + pytest (PostgreSQL)
 ├── sql/schema.sql              # idempotente: métricas, usuários e vínculos
-├── data/                       # clones git temporários + backups .sql (gitignored)
+├── data/                       # clones git dos repositórios minerados (gitignored)
 ├── src/
 │   ├── config.py               # carrega variáveis do .env
 │   ├── database.py             # pool de conexões + ETL (upsert) + init_schema()
 │   ├── status.py               # estado da coleta em background (thread-safe)
 │   ├── analises.py             # curva de concentração + score de sustentabilidade
 │   ├── relatorio.py            # relatório .docx (python-docx + matplotlib)
-│   ├── app.py                  # Flask: OAuth, CRUD de repos, APIs, snapshot, coleta
+│   ├── app.py                  # Flask: OAuth, cadastro/edição de repos, APIs, snapshot e coleta
 │   └── collect/
 │       ├── pydriller_collect.py   # code churn + Bus Factor + churn relativo
-│       │                          # + agregação mensal por autor
+│       │                          # + agregações por dia, mês e autor
 │       └── github_metrics.py      # TTFR (mediana, sem bots) + issues + releases
 │                                  # + contribuidores (com retry e token)
 ├── templates/
@@ -77,12 +83,14 @@ fap/
 │   ├── repo_detalhe.html       # abas GitHub | Análises FAP + relatório
 │   ├── comparar.html           # comparação lado a lado
 │   └── snapshot.html           # snapshot consolidado por período
+├── tests/                      # 102 testes: rotas, coletores, banco, score...
 └── static/
     ├── css/style.css           # token block (IBM Plex, tema claro)
     └── js/
-        ├── repos.js            # CRUD + polling + seleção p/ comparar
+        ├── repos.js            # cadastro/edição + polling + seleção p/ comparar
         ├── comparar.js         # gráficos da comparação
-        └── repo_detalhe.js     # gráficos Plotly + score + abas
+        ├── repo_detalhe.js     # gráficos Plotly + score + abas
+        └── plotly-2.35.2.min.js # Plotly local (funciona offline)
 ```
 
 ## Requisitos
@@ -170,7 +178,7 @@ app abre em `http://localhost:5000`. Os clones ficam num volume `dados-fap` e o
 banco num volume `postgres-dados` (sobrevivem a `docker compose down`).
 
 Endpoints principais:
-- `POST /repos` / `PUT /repos/<id>` — CRUD dos repositórios do usuário
+- `POST /repos` / `PUT /repos/<id>` — cadastro e edição dos repositórios do usuário
 - `GET /api/repos` — lista JSON (polling do dashboard)
 - `GET /api/repo/<id>/resumo` — série, autores, métricas, curva, histórico do
   score e score
@@ -178,8 +186,8 @@ Endpoints principais:
 - `GET /api/coleta/status` — estado da coleta
 - `GET /comparar?ids=1,2` — comparação lado a lado dos repositórios
 - `GET /snapshot` — tabela consolidada por período coletado (avaliável)
-- `GET /snapshot.csv?periodo=AAAAMMDD|AAAAMMDD` — export CSV do snapshot
-- `GET /snapshot.xml?periodo=AAAAMMDD|AAAAMMDD` — export XML do snapshot
+- `GET /snapshot.csv?periodo=AAAA-MM-DD|AAAA-MM-DD` — export CSV do snapshot
+- `GET /snapshot.xml?periodo=AAAA-MM-DD|AAAA-MM-DD` — export XML do snapshot
 - `GET /api/repo/<id>/periodos` — períodos coletados do repositório
   (base da comparação entre versões do mesmo projeto)
 - `GET /repo/<id>/relatorio` — relatório `.docx` (score, métricas, gráficos)
@@ -198,7 +206,7 @@ python -m collect.github_metrics       # TTFR, issues, releases, contribuidores
 ## Métricas
 | Métrica | Definição |
 |---------|-----------|
-| Commits | total de commits de autores humanos na janela (6 meses) |
+| Commits | total de commits de autores humanos na janela de coleta |
 | Bus Factor | menor `k` tal que a soma das `k` maiores contribuições > 50% do total |
 | TTFR | mediana do tempo até a primeira resposta humana (exclui PRs e bots) |
 | Churn relativo | (linhas add + del no período) / LOC do repositório |
@@ -215,7 +223,7 @@ conforme a prática dos estudos de Truck Factor.
 ```bash
 pytest -q        # na raiz do projeto (precisa do PostgreSQL; CI roda os mesmos)
 ```
-Suíte (100 testes): score/curva (matemática pura), utilitários dos coletores,
+Suíte (102 testes): score/curva (matemática pura), utilitários dos coletores,
 rede mockada com `responses` (paginação, PRs, bots, rate limit, releases),
 helpers do banco (criptografia do token e upserts), autocoleta, relatório
 `.docx` e snapshot, e smoke das rotas com login simulado.

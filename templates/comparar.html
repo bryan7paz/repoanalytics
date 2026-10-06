@@ -10,7 +10,7 @@
     <div>
         <p class="eyebrow"><a href="/">← meus repositórios</a></p>
         <h1 class="hero-title repo-titulo">Comparar <span class="accent">repositórios</span></h1>
-        <p class="repo-url" id="comp-alvo">janela de {{ meses }} meses</p>
+        <p class="repo-url" id="comp-alvo">último período coletado</p>
     </div>
 </section>
 
@@ -60,7 +60,6 @@
 {% block scripts %}
 <script>
     window.COMPARACAO = {{ dados | tojson }};
-    window.MESES = {{ meses }};
 </script>
 <script src="{{ url_for('static', filename='js/comparar.js') }}"></script>
 {% endblock %}

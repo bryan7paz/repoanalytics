@@ -200,8 +200,7 @@ def logout():
 @login_required
 def meus_repos():
     repos = repositorios_do_usuario(current_user.id)
-    return render_template("meus_repos.html", repos=repos,
-                           meses=MESES_ANALISE)
+    return render_template("meus_repos.html", repos=repos)
 
 
 @app.route("/repo/<int:id_repositorio>")
@@ -212,8 +211,7 @@ def repo_detalhe(id_repositorio):
     repo = repositorio_por_id(id_repositorio)
     if not repo:
         abort(404)
-    return render_template("repo_detalhe.html", repo=repo,
-                           meses=MESES_ANALISE)
+    return render_template("repo_detalhe.html", repo=repo)
 
 
 @app.route("/api/health")
@@ -505,8 +503,8 @@ JANELAS_RESUMO = {
 }
 
 
-def _serie_diaria(id_repositorio, inicio):
-    """Série dia a dia (commits, linhas +/−) desde `inicio`."""
+def _serie_diaria(id_repositorio, inicio, fim=None):
+    """Série dia a dia (commits, linhas +/−) desde `inicio` (até `fim`, se houver)."""
     with connection() as conn:
         return pd.read_sql(
             """
@@ -514,9 +512,10 @@ def _serie_diaria(id_repositorio, inicio):
                    SUM(lines_deleted) AS del
             FROM Metrica_Diaria
             WHERE id_repositorio = %s AND dia >= %s
+              AND (%s IS NULL OR dia <= %s)
             GROUP BY dia ORDER BY dia
             """,
-            conn, params=(id_repositorio, inicio),
+            conn, params=(id_repositorio, inicio, fim, fim),
         )
 
 
@@ -581,7 +580,7 @@ def comparar():
                     if usuario_dono(current_user.id, i))
         if d
     ]
-    return render_template("comparar.html", dados=dados, meses=MESES_ANALISE)
+    return render_template("comparar.html", dados=dados)
 
 
 @app.route("/api/repo/<int:id_repositorio>/periodos")
@@ -603,23 +602,39 @@ def api_repo_resumo(id_repositorio):
         abort(404)
     inicio_padrao, janela_padrao = _janela_exibicao(id_repositorio)
     p = request.args.get("periodo", "").strip()
+    fim = None
     if p in JANELAS_RESUMO:
         rotulo, _calc = JANELAS_RESUMO[p]
         inicio = _calc()
         janela = {"tipo": p, "rotulo": rotulo}
+    elif "|" in p:
+        # intervalo personalizado AAAA-MM-DD|AAAA-MM-DD (vindo do seletor)
+        ini_s, _, fim_s = p.partition("|")
+        try:
+            ini = pd.Timestamp(ini_s.strip())
+            fim_d = pd.Timestamp(fim_s.strip())
+            if pd.isna(ini) or pd.isna(fim_d) or ini > fim_d:
+                raise ValueError("intervalo inválido")
+        except (ValueError, TypeError):
+            p, inicio, janela = None, inicio_padrao, janela_padrao
+        else:
+            inicio, fim = ini.date(), fim_d.date()
+            janela = {"tipo": "custom",
+                      "rotulo": f"{inicio:%d/%m/%Y} → {fim:%d/%m/%Y}",
+                      "inicio": str(inicio), "fim": str(fim)}
     else:
-        p = None
-        inicio, janela = inicio_padrao, janela_padrao
-    serie = _serie_diaria(id_repositorio, inicio)
+        p, inicio, janela = None, inicio_padrao, janela_padrao
+    serie = _serie_diaria(id_repositorio, inicio, fim)
     with connection() as conn:
         autores = pd.read_sql(
             """
             SELECT autor, SUM(commits) AS commits
             FROM Metrica_Autor_Dia
             WHERE id_repositorio = %s AND dia >= %s
+              AND (%s IS NULL OR dia <= %s)
             GROUP BY autor ORDER BY commits DESC LIMIT 5
             """,
-            conn, params=(id_repositorio, inicio),
+            conn, params=(id_repositorio, inicio, fim, fim),
         )
         if autores.empty and p is None:
             autores = pd.read_sql(

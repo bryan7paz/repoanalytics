@@ -71,8 +71,8 @@ def gerar_relatorio(dados):
             f"Período analisado: {metricas['periodo_inicio']} a {metricas['periodo_fim']}"
         )
     doc.add_paragraph(
-        f"Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')} pela "
-        "Framework Analytics Platform (FAP)."
+        f"Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')} pelo "
+        "RepoAnalytics — Ferramenta de Acompanhamento de Projetos (FAP)."
     )
 
     doc.add_heading("Score de sustentabilidade", level=1)

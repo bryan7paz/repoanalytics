@@ -35,7 +35,7 @@ function renderVazio() {
     if (!vazio) {
         const nomes = dados.map(d => d.repo.nome).join("  ×  ");
         document.getElementById("comp-alvo").textContent =
-            `${nomes} · janela de ${window.MESES} meses`;
+            `${nomes} · último período coletado`;
     }
     return vazio;
 }
