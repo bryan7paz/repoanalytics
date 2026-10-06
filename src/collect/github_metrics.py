@@ -23,7 +23,7 @@ else:
 def _get(url, params=None, tentativas=5, token=None):
     """GET com retry exponencial para rate limit secundário e conexões derrubadas.
 
-    token: sobrescreve o token do sistema (usa o do usuário logado quando disponível).
+    token:sobrescreve o token do sistema (usa o do usuário logado quando disponível).
     """
     headers = dict(HEADERS)
     if token:
@@ -55,7 +55,7 @@ def _get(url, params=None, tentativas=5, token=None):
 
 
 def _parse_owner_repo(url):
-    """Extrai (owner, repo) de forma segura a partir da URL."""
+    """Extrai (owner, repo) de forma segura a partir de uma URL."""
     caminho = url.rstrip("/")
     if caminho.lower().endswith(".git"):
         caminho = caminho[:-4]
