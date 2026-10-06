@@ -1,4 +1,4 @@
-"""Análises novas da FAP — contribuição além do que a API do GitHub expõe.
+"""Análises novas da FAP - contribuição além do que a API do GitHub expõe.
 
 1. Curva de concentração de conhecimento: participação do top-5 de autores
    em cada mês (em % dos commits do mês).
@@ -20,10 +20,10 @@ TOP_AUTORES = 5
 
 # Limiar + mensagem para o alerta explicável de cada componente do score
 ALERTAS = {
-    "Atividade": (30, "Poucos commits na janela — o projeto pode estar estagnado."),
-    "Bus Factor": (60, "Conhecimento concentrado em 1–2 pessoas — risco de continuidade do projeto."),
-    "Responsividade": (50, "Tempo de resposta alto — contribuidores novos podem desistir de participar."),
-    "Estabilidade": (40, "Volume alto de código reescrito — pode indicar retrabalho na base de código."),
+    "Atividade": (30, "Poucos commits na janela - o projeto pode estar estagnado."),
+    "Bus Factor": (60, "Conhecimento concentrado em 1-2 pessoas - risco de continuidade do projeto."),
+    "Responsividade": (50, "Tempo de resposta alto - contribuidores novos podem desistir de participar."),
+    "Estabilidade": (40, "Volume alto de código reescrito - pode indicar retrabalho na base de código."),
 }
 
 

@@ -1,4 +1,4 @@
-"""Relatório .docx e snapshot avaliável — geração em memória e rotas."""
+"""Relatório .docx e snapshot avaliável - geração em memória e rotas."""
 import io
 
 import pytest
@@ -28,7 +28,7 @@ def _dados_completos():
         "score": {"score": 80.0, "componentes": [
             {"nome": "Atividade", "descricao": "x commits", "valor": 80.0},
             {"nome": "Bus Factor", "descricao": "BF = 2", "valor": 40.0,
-             "alerta": "Conhecimento concentrado em 1–2 pessoas — risco."},
+             "alerta": "Conhecimento concentrado em 1-2 pessoas - risco."},
         ]},
         "totais": {"commits": 123, "linhas_add": 100, "linhas_del": 50},
         "serie": [{"dia": "2026-09-01", "commits": 3},
@@ -48,7 +48,7 @@ def test_relatorio_completo_tem_titulo_e_alerta():
     from docx import Document
     doc = Document(io.BytesIO(buf.getvalue()))
     texto = "\n".join(p.text for p in doc.paragraphs)
-    assert "Relatório FAP — demo" in texto
+    assert "Relatório FAP - demo" in texto
     tabelas = "\n".join(c.text for t in doc.tables for row in t.rows for c in row.cells)
     assert "risco" in tabelas  # alerta do Bus Factor foi parar no documento
 

@@ -1,4 +1,4 @@
-"""Testes do módulo analises — matemática pura do score + curva sem dados."""
+"""Testes do módulo analises - matemática pura do score + curva sem dados."""
 from analises import (PISO_CHURN, PISO_TTFR_DIAS, TETO_BUS_FACTOR,
                       TETO_COMMITS, curva_concentracao, score_sustentabilidade)
 

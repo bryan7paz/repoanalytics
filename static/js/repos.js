@@ -13,7 +13,7 @@ function atualizarBtnComparar() {
 }
 
 function fmtData(d) {
-    if (!d) return "—";
+    if (!d) return "-";
     return new Date(d).toLocaleDateString("pt-BR");
 }
 
@@ -24,7 +24,7 @@ function badgeStatus(repo) {
 }
 
 function badgeScore(v) {
-    if (v == null) return '<span class="badge badge-gray">—</span>';
+    if (v == null) return '<span class="badge badge-gray">-</span>';
     const cor = v >= 70 ? "badge-green" : (v >= 40 ? "badge-amber" : "badge-red");
     return `<span class="badge ${cor}">${String(v).replace(".", ",")}</span>`;
 }
@@ -48,7 +48,7 @@ function linhaEdicao(r) {
 function render() {
     const body = document.getElementById("repo-body");
     if (!repos.length) {
-        body.innerHTML = '<tr class="loading-row"><td colspan="8">Nenhum repositório — adicione o primeiro acima.</td></tr>';
+        body.innerHTML = '<tr class="loading-row"><td colspan="8">Nenhum repositório - adicione o primeiro acima.</td></tr>';
         return;
     }
     body.innerHTML = repos.map(r => {
@@ -58,8 +58,8 @@ function render() {
             <td class="col-sel"><input type="checkbox" class="sel-repo" data-id="${r.id_repositorio}"${selecionados.has(String(r.id_repositorio)) ? " checked" : ""}></td>
             <td><strong>${esc(r.nome_exibicao || r.nome)}</strong></td>
             <td class="url-col">${esc(r.url)}</td>
-            <td class="num">${r.commits ?? "—"}</td>
-            <td class="num">${r.autores ?? "—"}</td>
+            <td class="num">${r.commits ?? "-"}</td>
+            <td class="num">${r.autores ?? "-"}</td>
             <td class="num">${badgeScore(r.score)}</td>
             <td class="num">${badgeStatus(r)}</td>
             <td class="col-acoes">
@@ -177,7 +177,7 @@ document.getElementById("form-add").addEventListener("submit", async (e) => {
         });
         const dados = await resp.json();
         if (!resp.ok) throw new Error(dados.erro || "Falha ao adicionar.");
-        ok.textContent = "Repositório adicionado — coleta iniciada em segundo plano.";
+        ok.textContent = "Repositório adicionado - coleta iniciada em segundo plano.";
         ok.hidden = false;
         document.getElementById("campo-url").value = "";
         document.getElementById("campo-nome").value = "";

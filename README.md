@@ -1,16 +1,16 @@
-# RepoAnalytics — Ferramenta de Acompanhamento de Projetos (FAP)
+# RepoAnalytics - Ferramenta de Acompanhamento de Projetos (FAP)
 
 [![lint](https://github.com/bryan7paz/repoanalytics/actions/workflows/lint.yml/badge.svg)](https://github.com/bryan7paz/repoanalytics/actions/workflows/lint.yml)
 
 Plataforma de **gestão de repositórios de software** para gestores de equipe:
 você cadastra o repositório do time e acompanha quem mais comita, quem mais
-adiciona e apaga linhas, os cinco melhores contribuidores e a saúde do projeto —
+adiciona e apaga linhas, os cinco melhores contribuidores e a saúde do projeto -
 via **Mineração de Repositórios de Software (MSR)**: coleta code churn
 (PyDriller) e métricas sociais (GitHub API), armazena em PostgreSQL e apresenta
 um dashboard com Plotly.js.
 
 **Para quem é:** gestores de equipe que precisam acompanhar como o time
-trabalha — não uma pessoa comum. Você entra com GitHub (OAuth), cadastra os
+trabalha - não uma pessoa comum. Você entra com GitHub (OAuth), cadastra os
 repositórios que quer acompanhar e a plataforma coleta commits, releases e
 contribuidores em segundo plano, calculando métricas que o próprio GitHub não
 mostra (Bus Factor, TTFR, churn relativo) mais **análises exclusivas**
@@ -20,14 +20,14 @@ mostra (Bus Factor, TTFR, churn relativo) mais **análises exclusivas**
 
 1. **Baixar**: `git clone https://github.com/bryan7paz/repoanalytics.git`
    (ou **Code → Download ZIP** no GitHub e extrair)
-2. **Instalar**: dentro da pasta, `python setup.py` — cria o venv, instala as
+2. **Instalar**: dentro da pasta, `python setup.py` - cria o venv, instala as
    dependências, gera o `.env` (com `SESSION_SECRET` pronto), sobe o
    PostgreSQL, cria o banco `fap` e aplica o schema
 3. **Preencher** (o setup avisa o que falta): `DB_PASSWORD` (a senha do
    postgres escolhida na instalação) e `GITHUB_TOKEN`
    (github.com/settings/tokens)
 4. **Abrir**: duplo clique em `rodar.bat` (sobe o postgres se caiu + inicia o
-   app) — ou `cd src` e `..\fap_env\Scripts\python.exe app.py`
+   app) - ou `cd src` e `..\fap_env\Scripts\python.exe app.py`
 5. **Usar**: abra `http://127.0.0.1:5000`, entre (GitHub ou modo dev), cole a
    URL de um repositório público e acompanhe a coleta em background
 
@@ -94,11 +94,11 @@ fap/
 ```
 
 ## Requisitos
--   Python 3.12 ou 3.13 (com "Add to PATH" — versões mais novas podem falhar
+-   Python 3.12 ou 3.13 (com "Add to PATH" - versões mais novas podem falhar
     ao compilar dependências presas no `requirements.txt`)
 -   PostgreSQL (porta 5432)
 -   Token do GitHub (essencial na prática: sem ele são só 60 req/hora da API e
-    o cálculo do TTFR faz 1 requisição por issue — a coleta não fecha a tempo;
+    o cálculo do TTFR faz 1 requisição por issue - a coleta não fecha a tempo;
     com token autenticado o limite é 5.000 req/hora)
 -   OAuth App do GitHub (opcional; habilita o login real)
 
@@ -151,10 +151,10 @@ rodar.bat   # sobe o postgres se caiu e inicia o app
    - **Homepage URL**: `http://127.0.0.1:5000`
    - **Authorization callback URL**: `http://127.0.0.1:5000/callback`
 3. Copie o **Client ID** e gere o **Client Secret** e cole no `.env`
-4. Reinicie o app — o botão **"Entrar com GitHub"** aparece no `/login`
+4. Reinicie o app - o botão **"Entrar com GitHub"** aparece no `/login`
 
 Sem OAuth App, o `/login` mostra o botão **"Entrar (modo desenvolvimento)"**
-(`/login/dev`), que entra como usuário `dev` — a rota só existe em localhost e
+(`/login/dev`), que entra como usuário `dev` - a rota só existe em localhost e
 só enquanto o OAuth não está configurado.
 
 ## Executar
@@ -162,7 +162,7 @@ só enquanto o OAuth não está configurado.
 cd src
 ..\fap_env\Scripts\python.exe app.py
 ```
-(o venv fica na raiz do projeto — ou ative-o com `..\fap_env\Scripts\activate`
+(o venv fica na raiz do projeto - ou ative-o com `..\fap_env\Scripts\activate`
 e use `python app.py`)
 Abra `http://localhost:5000`. Os repositórios vinculados que ainda não foram
 coletados (`Repositorio.atualizado_em IS NULL`) são processados em background no
@@ -178,21 +178,21 @@ app abre em `http://localhost:5000`. Os clones ficam num volume `dados-fap` e o
 banco num volume `postgres-dados` (sobrevivem a `docker compose down`).
 
 Endpoints principais:
-- `POST /repos` / `PUT /repos/<id>` — cadastro e edição dos repositórios do usuário
-- `GET /api/repos` — lista JSON (polling do dashboard)
-- `GET /api/repo/<id>/resumo` — série, autores, métricas, curva, histórico do
+- `POST /repos` / `PUT /repos/<id>` - cadastro e edição dos repositórios do usuário
+- `GET /api/repos` - lista JSON (polling do dashboard)
+- `GET /api/repo/<id>/resumo` - série, autores, métricas, curva, histórico do
   score e score
-- `GET /api/repo/<id>/github` — contribuidores e releases (API ao vivo)
-- `GET /api/coleta/status` — estado da coleta
-- `GET /comparar?ids=1,2` — comparação lado a lado dos repositórios
-- `GET /snapshot` — tabela consolidada por período coletado (avaliável)
-- `GET /snapshot.csv?periodo=AAAA-MM-DD|AAAA-MM-DD` — export CSV do snapshot
-- `GET /snapshot.xml?periodo=AAAA-MM-DD|AAAA-MM-DD` — export XML do snapshot
-- `GET /api/repo/<id>/periodos` — períodos coletados do repositório
+- `GET /api/repo/<id>/github` - contribuidores e releases (API ao vivo)
+- `GET /api/coleta/status` - estado da coleta
+- `GET /comparar?ids=1,2` - comparação lado a lado dos repositórios
+- `GET /snapshot` - tabela consolidada por período coletado (avaliável)
+- `GET /snapshot.csv?periodo=AAAA-MM-DD|AAAA-MM-DD` - export CSV do snapshot
+- `GET /snapshot.xml?periodo=AAAA-MM-DD|AAAA-MM-DD` - export XML do snapshot
+- `GET /api/repo/<id>/periodos` - períodos coletados do repositório
   (base da comparação entre versões do mesmo projeto)
-- `GET /repo/<id>/relatorio` — relatório `.docx` (score, métricas, gráficos)
-- `POST /logout` — encerra a sessão (somente POST)
-- `GET /api/health` — verificação de vida
+- `GET /repo/<id>/relatorio` - relatório `.docx` (score, métricas, gráficos)
+- `POST /logout` - encerra a sessão (somente POST)
+- `GET /api/health` - verificação de vida
 
 ## Coleta manual (opcional)
 Com o banco criado, basta reiniciar o app que ele detecta os
@@ -215,7 +215,7 @@ python -m collect.github_metrics       # TTFR, issues, releases, contribuidores
 | Curva de concentração | % dos commits do mês feitos pelo top-1 e top-5 de autores |
 | Score (0–100) | média das componentes normalizadas: atividade (teto 1000 commits), Bus Factor (teto 5), responsividade (piso 7 dias de TTFR) e estabilidade (piso de churn 1,5); métricas ausentes não entram na média |
 
-Nota metodológica: commits e Bus Factor consideram somente autores humanos —
+Nota metodológica: commits e Bus Factor consideram somente autores humanos -
 contas automatizadas (bots, como `dependabot[bot]`) são filtradas na coleta,
 conforme a prática dos estudos de Truck Factor.
 

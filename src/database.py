@@ -35,13 +35,13 @@ def _chave_token():
 def cifrar_token(token):
     """Cifra o token OAuth do usuário antes de persistir.
 
-    Sem SESSION_SECRET não cifra (chave fallback fraca) — o token não é
+    Sem SESSION_SECRET não cifra (chave fallback fraca) - o token não é
     armazenado e a coleta usa o token do sistema.
     """
     if not token:
         return None
     if not os.getenv("SESSION_SECRET"):
-        log.warning("SESSION_SECRET ausente — token do usuário não será armazenado.")
+        log.warning("SESSION_SECRET ausente - token do usuário não será armazenado.")
         return None
     return _chave_token().encrypt(token.encode()).decode()
 
@@ -54,7 +54,7 @@ def decifrar_token(valor):
         return _chave_token().decrypt(valor.encode()).decode()
     except InvalidToken:
         if valor.startswith("gAAAAA"):
-            return None  # cifrado com outra SESSION_SECRET — usa o token do sistema
+            return None  # cifrado com outra SESSION_SECRET - usa o token do sistema
         return valor  # gravação legada em plaintext (antes da criptografia)
 
 
@@ -72,7 +72,7 @@ def init_schema():
         "ALTER TABLE Repositorio DROP COLUMN IF EXISTS estrelas",
         # repos de donos diferentes podem ter o mesmo nome: identidade pela URL
         "ALTER TABLE Repositorio DROP CONSTRAINT IF EXISTS repositorio_nome_key",
-        # o valor é a mediana do TTFR — nome antigo divergia da implementação
+        # o valor é a mediana do TTFR - nome antigo divergia da implementação
         """DO $ren$ BEGIN
              IF EXISTS (SELECT 1 FROM information_schema.columns
                         WHERE table_name = 'metrica_sustentabilidade'
@@ -244,8 +244,8 @@ def get_connection():
             conn.close()
         except Exception:
             pass
-    # Se chegou aqui, todas as tentativas falharam — tenta recriar o pool
-    log.error("Todas as tentativas de conexão saudável falharam — recriando pool.")
+    # Se chegou aqui, todas as tentativas falharam - tenta recriar o pool
+    log.error("Todas as tentativas de conexão saudável falharam - recriando pool.")
     with _pool_lock:
         _pool = ThreadedConnectionPool(1, 10, **DB_CONFIG)
     return _pool.getconn()
@@ -484,7 +484,7 @@ def insert_metrica_diaria(df: pd.DataFrame, id_repositorio: int,
                           inicio, fim):
     """Substitui a série diária de um repositório na janela (limpa e recarrega).
 
-    Dias da janela sem commits perdem as linhas antigas — evita que valores de
+    Dias da janela sem commits perdem as linhas antigas - evita que valores de
     coletas anteriores (ex.: pré-filtro de bots) sobrevivam à re-coleta.
     """
     with connection() as conn:

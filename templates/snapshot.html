@@ -6,7 +6,7 @@
     <div>
         <p class="eyebrow"><a href="/">← meus repositórios</a></p>
         <h1 class="hero-title repo-titulo">Snapshot <span class="accent">avaliável</span></h1>
-        <p class="repo-url">tabela consolidada por período coletado — números fixos e reproduzíveis para o artigo</p>
+        <p class="repo-url">tabela consolidada por período coletado - números fixos e reproduzíveis para o artigo</p>
     </div>
 </section>
 
@@ -30,7 +30,7 @@
         <button class="btn btn-primary" type="submit">Gerar snapshot</button>
     </form>
     {% else %}
-        <p class="muted" style="padding: var(--space-s) 0">Nenhum período coletado ainda — adicione repositórios e aguarde a coleta terminar.</p>
+        <p class="muted" style="padding: var(--space-s) 0">Nenhum período coletado ainda - adicione repositórios e aguarde a coleta terminar.</p>
     {% endif %}
 </section>
 
@@ -64,13 +64,13 @@
                 <tr>
                     <td><strong>{{ l.rotulo }}</strong></td>
                     <td class="num">{{ l.commits }}</td>
-                    <td class="num">{{ l.bus_factor if l.bus_factor is not none else "—" }}</td>
-                    <td class="num">{{ "%.2f"|format(l.ttfr) if l.ttfr is not none else "—" }}</td>
-                    <td class="num">{{ "%.3f"|format(l.churn_relativo) if l.churn_relativo is not none else "—" }}</td>
-                    <td class="num">{{ "%.2f"|format(l.cadencia) if l.cadencia is not none else "—" }}</td>
-                    <td class="num">{{ l.issues_abertas if l.issues_abertas is not none else "—" }}</td>
-                    <td class="num">{{ l.issues_fechadas if l.issues_fechadas is not none else "—" }}</td>
-                    <td class="num">{{ l.score if l.score is not none else "—" }}</td>
+                    <td class="num">{{ l.bus_factor if l.bus_factor is not none else "-" }}</td>
+                    <td class="num">{{ "%.2f"|format(l.ttfr) if l.ttfr is not none else "-" }}</td>
+                    <td class="num">{{ "%.3f"|format(l.churn_relativo) if l.churn_relativo is not none else "-" }}</td>
+                    <td class="num">{{ "%.2f"|format(l.cadencia) if l.cadencia is not none else "-" }}</td>
+                    <td class="num">{{ l.issues_abertas if l.issues_abertas is not none else "-" }}</td>
+                    <td class="num">{{ l.issues_fechadas if l.issues_fechadas is not none else "-" }}</td>
+                    <td class="num">{{ l.score if l.score is not none else "-" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

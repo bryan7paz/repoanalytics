@@ -46,7 +46,7 @@ app = Flask(
 )
 app.secret_key = os.getenv("SESSION_SECRET") or secrets.token_hex(32)
 if not os.getenv("SESSION_SECRET"):
-    log.warning("SESSION_SECRET ausente — sessões não sobrevivem a restarts "
+    log.warning("SESSION_SECRET ausente - sessões não sobrevivem a restarts "
                 "e tokens OAuth de usuários não são armazenados.")
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
@@ -114,8 +114,8 @@ app.register_error_handler(500, _tratar_erro_http)
 # ---------------------------------------------------------------------------
 
 ERROS_LOGIN = {
-    "state_invalido": "sessão expirada — tente novamente.",
-    "acesso_negado": "acesso negado na tela do GitHub — autorize a FAP para entrar.",
+    "state_invalido": "sessão expirada - tente novamente.",
+    "acesso_negado": "acesso negado na tela do GitHub - autorize a FAP para entrar.",
     "sem_codigo": "o GitHub não devolveu o código de autorização.",
     "falha_troca_token": "falha ao trocar o código pelo token.",
     "falha_perfil": "falha ao consultar seu perfil no GitHub.",
@@ -505,7 +505,7 @@ def _janela_exibicao(id_repositorio):
     """(inicio_filtro, periodo) das telas do repo.
 
     Com coleta concluída: filtra a partir do `periodo_inicio` gravado e
-    devolve (inicio, fim) do último período — os números não driftam entre
+    devolve (inicio, fim) do último período - os números não driftam entre
     coletas. Sem coleta: cai para a janela corrente (hoje − MESES_ANALISE,
     dia 1) e periodo=None.
     """
@@ -613,7 +613,7 @@ def comparar():
 @app.route("/api/repo/<int:id_repositorio>/periodos")
 @login_required
 def api_repo_periodos(id_repositorio):
-    """Períodos coletados do repo com métricas — base da comparação de versões."""
+    """Períodos coletados do repo com métricas - base da comparação de versões."""
     if not usuario_dono(current_user.id, id_repositorio):
         abort(403)
     return jsonify({"periodos": _periodos_do_repo(id_repositorio)})
@@ -892,7 +892,7 @@ def snapshot_csv():
 @app.route("/snapshot.xml")
 @login_required
 def snapshot_xml():
-    """Mesmo consolidado do CSV, em XML — mesmos campos, período fixo."""
+    """Mesmo consolidado do CSV, em XML - mesmos campos, período fixo."""
     pedido = _parse_periodo(request.args.get("periodo"))
     if not pedido:
         abort(400)
@@ -944,7 +944,7 @@ def tarefa_mineracao(ids=None, token=None):
         finally:
             _coleta_lock.release()
         return
-    log.warning("Coleta em andamento — nova execução entrou em espera.")
+    log.warning("Coleta em andamento - nova execução entrou em espera.")
     threading.Thread(target=_coleta_em_espera, args=(ids, token),
                      name="coleta-espera", daemon=True).start()
 
@@ -1004,7 +1004,7 @@ def _tarefa_mineracao(ids=None, token=None):
     if erros:
         mensagem = "Falha em: " + ", ".join(erros)
     elif falhas:
-        mensagem = f"Coleta concluída — falhou em {len(falhas)} repositório(s)."
+        mensagem = f"Coleta concluída - falhou em {len(falhas)} repositório(s)."
     else:
         mensagem = "Coleta concluída."
     status.atualizar(estado="erro" if erros else "concluido",
@@ -1044,9 +1044,9 @@ def iniciar_autocoleta():
         status.atualizar(estado="erro", mensagem="Falha ao consultar o banco.")
         return
     if pendentes:
-        log.info("Repositórios pendentes: %s — coleta em background.", pendentes)
+        log.info("Repositórios pendentes: %s - coleta em background.", pendentes)
         status.atualizar(estado="coletando",
-                         mensagem="Banco com dados pendentes — coleta iniciada.",
+                         mensagem="Banco com dados pendentes - coleta iniciada.",
                          repos_concluidos=0, total_repos=len(pendentes))
         threading.Thread(target=tarefa_mineracao, args=(pendentes, None),
                          name="coleta-boot", daemon=True).start()

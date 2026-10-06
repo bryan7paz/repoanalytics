@@ -9,7 +9,7 @@ function esc(str) {
 }
 
 function fmtNum(n) {
-    return n == null ? "—" : new Intl.NumberFormat("pt-BR").format(n);
+    return n == null ? "-" : new Intl.NumberFormat("pt-BR").format(n);
 }
 
 const LAYOUT_BASE = {
@@ -154,10 +154,10 @@ function renderMetricas(m) {
         return;
     }
     periodo.textContent = `período ${m.periodo_inicio} → ${m.periodo_fim}`;
-    vals[0].textContent = m.bus_factor ?? "—";
-    vals[1].textContent = m.ttfr != null ? m.ttfr.toFixed(2) + "d" : "—";
-    vals[2].textContent = m.churn_relativo != null ? m.churn_relativo.toFixed(3) : "—";
-    vals[3].textContent = m.cadencia_releases != null ? m.cadencia_releases.toFixed(2) + "/mês" : "—";
+    vals[0].textContent = m.bus_factor ?? "-";
+    vals[1].textContent = m.ttfr != null ? m.ttfr.toFixed(2) + "d" : "-";
+    vals[2].textContent = m.churn_relativo != null ? m.churn_relativo.toFixed(3) : "-";
+    vals[3].textContent = m.cadencia_releases != null ? m.cadencia_releases.toFixed(2) + "/mês" : "-";
     vals[4].textContent = fmtNum(m.issues_abertas);
     vals[5].textContent = fmtNum(m.issues_fechadas);
 }
@@ -168,7 +168,7 @@ function renderScore(score) {
     const bars = document.getElementById("score-bars");
     const formula = document.getElementById("score-formula");
     if (!score || score.score == null) {
-        num.textContent = "—";
+        num.textContent = "-";
         bars.innerHTML = '<p class="muted">sem dados suficientes</p>';
         return;
     }
@@ -190,7 +190,7 @@ function renderEvolucao(historico) {
     const pontos = (historico || []).filter(h => h.score != null);
     if (pontos.length < 2) {
         document.getElementById("graf-evolucao").innerHTML =
-            '<p class="muted" style="padding:24px">Aparece a partir da segunda coleta — a agendada roda a cada 7 dias.</p>';
+            '<p class="muted" style="padding:24px">Aparece a partir da segunda coleta - a agendada roda a cada 7 dias.</p>';
         return;
     }
     Plotly.newPlot("graf-evolucao", [{
@@ -209,7 +209,7 @@ function renderEvolucao(historico) {
 function renderEquipe(autores) {
     if (!autores || !autores.length) {
         document.getElementById("graf-equipe").innerHTML =
-            '<p class="muted" style="padding:24px">Sem estatísticas por autor ainda — colete os commits primeiro.</p>';
+            '<p class="muted" style="padding:24px">Sem estatísticas por autor ainda - colete os commits primeiro.</p>';
         return;
     }
     const a = autores.slice().reverse();
@@ -247,7 +247,7 @@ function renderEquipe(autores) {
 function renderCurva(curva) {
     if (!curva || !curva.length) {
         document.getElementById("graf-curva").innerHTML =
-            '<p class="muted" style="padding:24px">Sem dados de autores mensais ainda — colete os commits primeiro.</p>';
+            '<p class="muted" style="padding:24px">Sem dados de autores mensais ainda - colete os commits primeiro.</p>';
         return;
     }
     Plotly.newPlot("graf-curva", [
@@ -313,10 +313,10 @@ function renderComparacaoPeriodos() {
         ["Issues abertas", a.issues_abertas, b.issues_abertas, 0],
         ["Issues fechadas", a.issues_fechadas, b.issues_fechadas, 0],
     ];
-    const fmt = (v, d) => v == null ? "—" : Number(v).toLocaleString("pt-BR",
+    const fmt = (v, d) => v == null ? "-" : Number(v).toLocaleString("pt-BR",
         { minimumFractionDigits: d, maximumFractionDigits: d });
     const delta = (va, vb, d) => {
-        if (va == null || vb == null) return "—";
+        if (va == null || vb == null) return "-";
         const dif = vb - va;
         if (dif === 0) return "= 0";
         return (dif > 0 ? "+" : "") + fmt(dif, d);
@@ -356,7 +356,7 @@ async function carregarGithub() {
             ? d.releases.map(r => `
                 <div class="item-lista">
                     <span class="item-nome">${esc(r.tag)}</span>
-                    <span class="item-num">${r.publicado_em ? new Date(r.publicado_em).toLocaleDateString("pt-BR") : "—"}</span>
+                    <span class="item-num">${r.publicado_em ? new Date(r.publicado_em).toLocaleDateString("pt-BR") : "-"}</span>
                 </div>`).join("")
             : '<p class="muted">nenhum release publicado.</p>';
     } catch (e) {

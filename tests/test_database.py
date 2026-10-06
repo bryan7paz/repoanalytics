@@ -1,4 +1,4 @@
-"""Helpers do database.py — criptografia do token e upserts (usa o banco de teste)."""
+"""Helpers do database.py - criptografia do token e upserts (usa o banco de teste)."""
 from datetime import date
 
 import pandas as pd
@@ -81,7 +81,7 @@ def test_insert_metrica_diaria_limpa_dias_antigos_da_janela():
         insert_metrica_diaria(base, id_repo, *janela)
 
         # segunda coleta da mesma janela sem o dia 11 (ex.: passou a ser
-        # filtrado como bot) — a linha velha precisa sumir, não sobreviver
+        # filtrado como bot) - a linha velha precisa sumir, não sobreviver
         insert_metrica_diaria(
             base[base["dia"] == date(2026, 3, 10)], id_repo, *janela)
 

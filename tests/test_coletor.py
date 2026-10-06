@@ -1,4 +1,4 @@
-"""Utilitários puros dos coletores — sem rede e sem banco."""
+"""Utilitários puros dos coletores - sem rede e sem banco."""
 import subprocess
 
 import pandas as pd

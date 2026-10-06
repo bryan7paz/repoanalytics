@@ -8,7 +8,7 @@ from datetime import datetime
 
 import matplotlib
 
-matplotlib.use("Agg")  # backend sem display — só geração de arquivo
+matplotlib.use("Agg")  # backend sem display - só geração de arquivo
 import matplotlib.pyplot as plt
 from docx import Document
 from docx.shared import Inches
@@ -63,7 +63,7 @@ def gerar_relatorio(dados):
     totais = dados["totais"]
 
     doc = Document()
-    doc.add_heading(f"Relatório FAP — {repo['nome']}", 0)
+    doc.add_heading(f"Relatório FAP - {repo['nome']}", 0)
 
     doc.add_paragraph(f"Repositório: {repo['url']}")
     if metricas:
@@ -72,7 +72,7 @@ def gerar_relatorio(dados):
         )
     doc.add_paragraph(
         f"Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')} pelo "
-        "RepoAnalytics — Ferramenta de Acompanhamento de Projetos (FAP)."
+        "RepoAnalytics - Ferramenta de Acompanhamento de Projetos (FAP)."
     )
 
     doc.add_heading("Score de sustentabilidade", level=1)
@@ -112,11 +112,11 @@ def gerar_relatorio(dados):
     for rotulo, valor in linhas:
         celulas = tabela.add_row().cells
         celulas[0].text = rotulo
-        celulas[1].text = "—" if valor is None else str(valor)
+        celulas[1].text = "-" if valor is None else str(valor)
 
     png = _png_commits(dados["serie"])
     if png:
-        doc.add_heading("Atividade — commits por dia", level=1)
+        doc.add_heading("Atividade - commits por dia", level=1)
         doc.add_picture(png, width=Inches(6.5))
 
     png = _png_curva(dados["curva"])

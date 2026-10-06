@@ -21,7 +21,7 @@ const BASE_LAYOUT = {
 };
 
 function fmt(n, casas) {
-    if (n == null) return "—";
+    if (n == null) return "-";
     return casas == null ? new Intl.NumberFormat("pt-BR").format(n)
                          : new Intl.NumberFormat("pt-BR",
                              { maximumFractionDigits: casas }).format(n);
@@ -45,13 +45,13 @@ function renderTabela() {
         ["Commits (janela)", d => fmt(d.totais.commits)],
         ["Linhas +", d => fmt(d.totais.linhas_add)],
         ["Linhas −", d => fmt(d.totais.linhas_del)],
-        ["Bus Factor", d => d.metricas && d.metricas.bus_factor != null ? d.metricas.bus_factor : "—"],
-        ["TTFR (mediana, dias)", d => d.metricas ? fmt(d.metricas.ttfr, 2) : "—"],
-        ["Churn relativo", d => d.metricas ? fmt(d.metricas.churn_relativo, 3) : "—"],
-        ["Cadência (releases/mês)", d => d.metricas ? fmt(d.metricas.cadencia_releases, 2) : "—"],
-        ["Issues abertas", d => d.metricas ? fmt(d.metricas.issues_abertas) : "—"],
-        ["Issues fechadas", d => d.metricas ? fmt(d.metricas.issues_fechadas) : "—"],
-        ["Score (0–100)", d => d.score && d.score.score != null ? fmt(d.score.score, 1) : "—"],
+        ["Bus Factor", d => d.metricas && d.metricas.bus_factor != null ? d.metricas.bus_factor : "-"],
+        ["TTFR (mediana, dias)", d => d.metricas ? fmt(d.metricas.ttfr, 2) : "-"],
+        ["Churn relativo", d => d.metricas ? fmt(d.metricas.churn_relativo, 3) : "-"],
+        ["Cadência (releases/mês)", d => d.metricas ? fmt(d.metricas.cadencia_releases, 2) : "-"],
+        ["Issues abertas", d => d.metricas ? fmt(d.metricas.issues_abertas) : "-"],
+        ["Issues fechadas", d => d.metricas ? fmt(d.metricas.issues_fechadas) : "-"],
+        ["Score (0–100)", d => d.score && d.score.score != null ? fmt(d.score.score, 1) : "-"],
     ];
     const cabecalho = `<tr><th>Indicador</th>${dados.map(d =>
         `<th class="num">${esc(d.repo.nome)}</th>`).join("")}</tr>`;
@@ -66,7 +66,7 @@ function renderScore() {
     const comScore = dados.filter(d => d.score && d.score.score != null);
     if (!comScore.length) {
         document.getElementById("graf-score").innerHTML =
-            '<p class="muted" style="padding:24px">Sem scores ainda — aguarde a coleta.</p>';
+            '<p class="muted" style="padding:24px">Sem scores ainda - aguarde a coleta.</p>';
         return;
     }
     Plotly.newPlot("graf-score", [{
