@@ -1,232 +1,234 @@
-# RepoAnalytics - Ferramenta de Acompanhamento de Projetos (FAP)
+# RepoAnalytics
 
 [![lint](https://github.com/bryan7paz/repoanalytics/actions/workflows/lint.yml/badge.svg)](https://github.com/bryan7paz/repoanalytics/actions/workflows/lint.yml)
 
-Plataforma de **gestão de repositórios de software** para gestores de equipe:
-você cadastra o repositório do time e acompanha quem mais comita, quem mais
-adiciona e apaga linhas, os cinco melhores contribuidores e a saúde do projeto -
-via **Mineração de Repositórios de Software (MSR)**: coleta code churn
-(PyDriller) e métricas sociais (GitHub API), armazena em PostgreSQL e apresenta
-um dashboard com Plotly.js.
+Ferramenta de Acompanhamento de Projetos (FAP): plataforma de gestão de repositórios de software para gestores de equipe. Você cadastra o repositório do time e acompanha quem mais comita, quem mais adiciona e apaga linhas, os cinco melhores contribuidores e a saúde do projeto.
 
-**Para quem é:** gestores de equipe que precisam acompanhar como o time
-trabalha - não uma pessoa comum. Você entra com GitHub (OAuth), cadastra os
-repositórios que quer acompanhar e a plataforma coleta commits, releases e
-contribuidores em segundo plano, calculando métricas que o próprio GitHub não
-mostra (Bus Factor, TTFR, churn relativo) mais **análises exclusivas**
-(curva de concentração de conhecimento e score de sustentabilidade 0–100).
+Os dados vêm de Mineração de Repositórios de Software (MSR): o code churn é coletado com PyDriller, as métricas sociais com a API do GitHub, tudo fica em PostgreSQL e o dashboard usa Plotly.js.
 
-## Passo a passo (do zero)
+O público-alvo são gestores que precisam acompanhar como o time trabalha. Você entra com o GitHub (OAuth), cadastra os repositórios e a coleta de commits, releases e contribuidores roda em segundo plano. Além de métricas que o GitHub não mostra (Bus Factor, TTFR, churn relativo), há duas análises próprias: a curva de concentração de conhecimento e um score de sustentabilidade de 0 a 100.
 
-1. **Baixar**: `git clone https://github.com/bryan7paz/repoanalytics.git`
-   (ou **Code → Download ZIP** no GitHub e extrair)
-2. **Instalar**: dentro da pasta, `python setup.py` - cria o venv, instala as
-   dependências, gera o `.env` (com `SESSION_SECRET` pronto), sobe o
-   PostgreSQL, cria o banco `fap` e aplica o schema
-3. **Preencher** (o setup avisa o que falta): `DB_PASSWORD` (a senha do
-   postgres escolhida na instalação) e `GITHUB_TOKEN`
-   (github.com/settings/tokens)
-4. **Abrir**: duplo clique em `rodar.bat` (sobe o postgres se caiu + inicia o
-   app) - ou `cd src` e `..\fap_env\Scripts\python.exe app.py`
-5. **Usar**: abra `http://127.0.0.1:5000`, entre (GitHub ou modo dev), cole a
-   URL de um repositório público e acompanhe a coleta em background
+## Sumário
 
-## Fluxo
-1. `GET /` sem sessão → redireciona para `/login` (OAuth GitHub; sem
-   `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` no `.env` o botão cai no
-   `/login/dev`, que entra como usuário `dev` para desenvolvimento).
-2. No dashboard, cole a URL de um repositório público → valida na API do GitHub,
-   vincula ao usuário e dispara a coleta em background (polling em
-   `/api/coleta/status`).
-3. Na página do repositório, duas abas:
-   - **GitHub**: commits por dia com seletor de período (1 dia, 7 dias, 3
-     meses ou 6 meses), linhas +/-, autores do período, quem faz o quê
-     (linhas por autor), contribuidores e releases (API ao vivo);
-   - **Análises FAP**: score 0–100 com barras de componentes e alertas
-      explicáveis, evolução do score, comparação entre duas coletas do
-      mesmo repositório, curva de concentração (top-1 e top-5 por mês) e
-      métricas de sustentabilidade. O botão do relatório `.docx` fica no
-      topo da página.
-   4. No dashboard, marque 2+ repositórios para **comparar** (`/comparar`) ou
-      abra o **snapshot** (`/snapshot`): tabela consolidada por período coletado,
-      com números fixos e export CSV e XML.
+- [Começando](#começando)
+- [Como funciona](#como-funciona)
+- [Requisitos](#requisitos)
+- [Instalação](#instalação)
+- [Configuração](#configuração)
+- [Executando](#executando)
+- [Endpoints](#endpoints)
+- [Métricas](#métricas)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Testes](#testes)
+- [Licença](#licença)
 
-## Estrutura
+## Começando
+
+```bash
+git clone https://github.com/bryan7paz/repoanalytics.git
+cd repoanalytics
+python setup.py
 ```
-fap/
-├── requirements.txt
-├── setup.py                    # instalação guiada (venv, .env, banco, schema)
-├── rodar.bat                   # sobe o PostgreSQL + inicia o app (Windows)
-├── Dockerfile                  # imagem (python:3.12-slim + git p/ PyDriller)
-├── docker-compose.yml          # app + postgres:16 com volumes
-├── .env.example                # -> copie para .env e preencha
-├── conftest.py + pytest.ini    # raiz da suíte de testes (100)
-├── .github/workflows/lint.yml  # CI: pyflakes + pytest (PostgreSQL)
-├── sql/schema.sql              # idempotente: métricas, usuários e vínculos
-├── data/                       # clones git dos repositórios minerados (gitignored)
-├── src/
-│   ├── config.py               # carrega variáveis do .env
-│   ├── database.py             # pool de conexões + ETL (upsert) + init_schema()
-│   ├── status.py               # estado da coleta em background (thread-safe)
-│   ├── analises.py             # curva de concentração + score de sustentabilidade
-│   ├── relatorio.py            # relatório .docx (python-docx + matplotlib)
-│   ├── app.py                  # Flask: OAuth, cadastro/edição de repos, APIs, snapshot e coleta
-│   └── collect/
-│       ├── pydriller_collect.py   # code churn + Bus Factor + churn relativo
-│       │                          # + agregações por dia, mês e autor
-│       └── github_metrics.py      # TTFR (mediana, sem bots) + issues + releases
-│                                  # + contribuidores (com retry e token)
-├── templates/
-│   ├── base.html               # topo (marca + usuário) e rodapé
-│   ├── login.html              # cartão de autenticação
-│   ├── meus_repos.html         # formulário + lista com status/polling
-│   ├── repo_detalhe.html       # abas GitHub | Análises FAP + relatório
-│   ├── comparar.html           # comparação lado a lado
-│   └── snapshot.html           # snapshot consolidado por período
-├── tests/                      # 104 testes: rotas, coletores, banco, score...
-└── static/
-    ├── css/style.css           # token block (IBM Plex, tema claro)
-    └── js/
-        ├── repos.js            # cadastro/edição + polling + seleção p/ comparar
-        ├── comparar.js         # gráficos da comparação
-        ├── repo_detalhe.js     # gráficos Plotly + score + abas
-        └── plotly-2.35.2.min.js # Plotly local (funciona offline)
-```
+
+O `setup.py` cria o venv, instala as dependências, gera o `.env` (com `SESSION_SECRET` pronto), sobe o PostgreSQL, cria o banco `fap` e aplica o schema. Ao final ele avisa o que ainda falta preencher: `DB_PASSWORD` (a senha do postgres escolhida na instalação) e `GITHUB_TOKEN` (gere em https://github.com/settings/tokens).
+
+Depois é só abrir o `rodar.bat` (sobe o postgres se ele tiver caído e inicia o app) e acessar http://127.0.0.1:5000. Entre com o GitHub ou pelo modo de desenvolvimento, cole a URL de um repositório público e acompanhe a coleta.
+
+## Como funciona
+
+1. `GET /` sem sessão redireciona para `/login`. Se `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` não estiverem no `.env`, o botão leva a `/login/dev`, que entra como o usuário `dev`.
+2. No dashboard, cole a URL de um repositório público. A URL é validada na API do GitHub, o repositório é vinculado ao usuário e a coleta começa em background (o progresso é consultado em `/api/coleta/status`).
+3. A página do repositório tem duas abas:
+   - **GitHub**: commits por dia com seletor de período (1 dia, 7 dias, 3 meses ou 6 meses), linhas adicionadas e removidas, autores do período, linhas por autor, contribuidores e releases (API ao vivo).
+   - **Análises FAP**: score de 0 a 100 com barras por componente e alertas explicáveis, evolução do score, comparação entre duas coletas do mesmo repositório, curva de concentração (top-1 e top-5 por mês) e métricas de sustentabilidade. O botão do relatório `.docx` fica no topo da página.
+4. No dashboard, marque dois ou mais repositórios para compará-los em `/comparar`, ou abra o `/snapshot`, uma tabela consolidada por período coletado com exportação em CSV e XML.
 
 ## Requisitos
--   Python 3.12 ou 3.13 (com "Add to PATH" - versões mais novas podem falhar
-    ao compilar dependências presas no `requirements.txt`)
--   PostgreSQL (porta 5432)
--   Token do GitHub (essencial na prática: sem ele são só 60 req/hora da API e
-    o cálculo do TTFR faz 1 requisição por issue - a coleta não fecha a tempo;
-    com token autenticado o limite é 5.000 req/hora)
--   OAuth App do GitHub (opcional; habilita o login real)
+
+- Python 3.12 ou 3.13, com "Add to PATH". Versões mais novas podem falhar ao compilar dependências fixadas no `requirements.txt`.
+- PostgreSQL na porta 5432.
+- Token do GitHub. Na prática é obrigatório: sem ele o limite é de 60 requisições por hora, e o cálculo do TTFR faz uma requisição por issue, então a coleta não termina. Com token o limite é de 5.000 por hora.
+- OAuth App do GitHub (opcional, só para o login real).
 
 ## Instalação
 
-### Instalação rápida (recomendada)
+### Automática
+
 ```bash
 python setup.py
 ```
-Faz tudo sozinho: cria o venv, instala as dependências, gera o `.env` (com
-`SESSION_SECRET` pronto), sobe o PostgreSQL se estiver parado, cria o banco
-`fap`, aplica o schema e imprime o que ainda falta (token do GitHub, OAuth
-App). Depois, para rodar com duplo clique:
-```bash
-rodar.bat   # sobe o postgres se caiu e inicia o app
-```
 
-### Instalação manual
+Veja o que o script faz em [Começando](#começando). Para rodar depois com duplo clique, use o `rodar.bat`.
+
+### Manual
+
 1. Crie o ambiente virtual e instale as dependências:
+
    ```bash
    python -m venv fap_env
    .\fap_env\Scripts\activate
    pip install -r requirements.txt
    ```
-2. Crie o banco (o schema é aplicado sozinho no boot):
+
+2. Crie o banco. O schema é aplicado sozinho quando o app sobe.
+
    ```bash
    psql -U postgres -d postgres -c "CREATE DATABASE fap;"
    ```
-3. Preencha as credenciais:
+
+3. Copie o arquivo de exemplo e preencha as credenciais (`DB_PASSWORD` e `GITHUB_TOKEN`):
+
    ```bash
-   copy .env.example .env   # edite DB_PASSWORD (e GITHUB_TOKEN)
+   copy .env.example .env
    ```
 
+### Docker
+
+Com o Docker Desktop instalado e o `.env` preenchido:
+
+```bash
+docker compose up --build
+```
+
+O compose sobe o app e o PostgreSQL na mesma rede, cria o banco e disponibiliza o app em http://localhost:5000. Os clones dos repositórios ficam no volume `dados-fap` e o banco em `postgres-dados`; ambos sobrevivem a um `docker compose down`.
+
+## Configuração
+
 ### Variáveis do `.env`
+
 | Variável | Obrigatória | Descrição |
 |----------|-------------|-----------|
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | sim | acesso ao PostgreSQL (defaults: localhost/5432/fap/postgres) |
-| `GITHUB_TOKEN` | essencial | PAT do GitHub: sem ele são só 60 req/h e a coleta de TTFR não fecha |
-| `SESSION_SECRET` | sim | segredo da sessão Flask e da cifra do token OAuth (sem ele o token não é armazenado) |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | para login real | credenciais do OAuth App (sem elas o `/login` perde o botão) |
-| `MESES_ANALISE` | não | janela de análise em meses (default: 6) |
-| `MINERACAO_INTERVALO_DIAS` | não | período da coleta automática (default: 7) |
-| `DB_CONNECT_TIMEOUT` | não | timeout de conexão com o banco em segundos (default: 10) |
-| `FAP_HOST` / `PORT` | não | bind do servidor waitress (defaults: 127.0.0.1/5000) |
-| `FAP_SEM_AUTOCOLETA` | não | `1` = não coleta nada no boot (usado pelos testes) |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | sim | Acesso ao PostgreSQL (padrões: localhost, 5432, fap, postgres) |
+| `GITHUB_TOKEN` | na prática, sim | Token pessoal do GitHub. Sem ele a coleta de TTFR não termina |
+| `SESSION_SECRET` | sim | Segredo da sessão Flask e da cifra do token OAuth. Sem ele o token não é armazenado |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | só para login real | Credenciais do OAuth App. Sem elas o `/login` não mostra o botão do GitHub |
+| `MESES_ANALISE` | não | Janela de análise em meses (padrão: 6) |
+| `MINERACAO_INTERVALO_DIAS` | não | Intervalo da coleta automática em dias (padrão: 7) |
+| `DB_CONNECT_TIMEOUT` | não | Timeout de conexão com o banco em segundos (padrão: 10) |
+| `FAP_HOST`, `PORT` | não | Endereço e porta do servidor waitress (padrões: 127.0.0.1 e 5000) |
+| `FAP_SEM_AUTOCOLETA` | não | Com `1`, nada é coletado no boot (usado pelos testes) |
 
 ### Login com GitHub (OAuth App)
-1. Em <https://github.com/settings/developers> → **OAuth Apps** → **New OAuth App**
+
+1. Em https://github.com/settings/developers, vá em **OAuth Apps** e clique em **New OAuth App**.
 2. Preencha:
-   - **Homepage URL**: `http://127.0.0.1:5000`
-   - **Authorization callback URL**: `http://127.0.0.1:5000/callback`
-3. Copie o **Client ID** e gere o **Client Secret** e cole no `.env`
-4. Reinicie o app - o botão **"Entrar com GitHub"** aparece no `/login`
+   - Homepage URL: `http://127.0.0.1:5000`
+   - Authorization callback URL: `http://127.0.0.1:5000/callback`
+3. Copie o Client ID, gere um Client Secret e cole os dois no `.env`.
+4. Reinicie o app. O botão "Entrar com GitHub" passa a aparecer em `/login`.
 
-Sem OAuth App, o `/login` mostra o botão **"Entrar (modo desenvolvimento)"**
-(`/login/dev`), que entra como usuário `dev` - a rota só existe em localhost e
-só enquanto o OAuth não está configurado.
+Sem o OAuth App configurado, o `/login` mostra "Entrar (modo desenvolvimento)", que entra como o usuário `dev`. Essa rota só existe em localhost e só enquanto o OAuth não estiver configurado.
 
-## Executar
+## Executando
+
 ```bash
 cd src
 ..\fap_env\Scripts\python.exe app.py
 ```
-(o venv fica na raiz do projeto - ou ative-o com `..\fap_env\Scripts\activate`
-e use `python app.py`)
-Abra `http://localhost:5000`. Os repositórios vinculados que ainda não foram
-coletados (`Repositorio.atualizado_em IS NULL`) são processados em background no
-boot, e uma rotina APScheduler (padrão: 7 dias) mantém tudo atualizado.
 
-### Com Docker (opcional)
-Com o Docker Desktop instalado e o `.env` preenchido:
-```bash
-docker compose up --build
-```
-Sobe app + PostgreSQL na mesma rede (o banco é criado sozinho pelo compose) e o
-app abre em `http://localhost:5000`. Os clones ficam num volume `dados-fap` e o
-banco num volume `postgres-dados` (sobrevivem a `docker compose down`).
+O venv fica na raiz do projeto. Se preferir, ative-o com `..\fap_env\Scripts\activate` e rode `python app.py`.
 
-Endpoints principais:
-- `POST /repos` / `PUT /repos/<id>` - cadastro e edição dos repositórios do usuário
-- `GET /api/repos` - lista JSON (polling do dashboard)
-- `GET /api/repo/<id>/resumo` - série, autores, métricas, curva, histórico do
-  score e score
-- `GET /api/repo/<id>/github` - contribuidores e releases (API ao vivo)
-- `GET /api/coleta/status` - estado da coleta
-- `GET /comparar?ids=1,2` - comparação lado a lado dos repositórios
-- `GET /snapshot` - tabela consolidada por período coletado (avaliável)
-- `GET /snapshot.csv?periodo=AAAA-MM-DD|AAAA-MM-DD` - export CSV do snapshot
-- `GET /snapshot.xml?periodo=AAAA-MM-DD|AAAA-MM-DD` - export XML do snapshot
-- `GET /api/repo/<id>/periodos` - períodos coletados do repositório
-  (base da comparação entre versões do mesmo projeto)
-- `GET /repo/<id>/relatorio` - relatório `.docx` (score, métricas, gráficos)
-- `POST /logout` - encerra a sessão (somente POST)
-- `GET /api/health` - verificação de vida
+Acesse http://localhost:5000. No boot, os repositórios vinculados que ainda não foram coletados (`Repositorio.atualizado_em IS NULL`) são processados em background, e uma rotina do APScheduler (padrão: a cada 7 dias) mantém os dados atualizados.
 
-## Coleta manual (opcional)
-Com o banco criado, basta reiniciar o app que ele detecta os
-repositórios pendentes e coleta; para rodar os motores fora do app:
+### Coleta manual
+
+Para rodar os coletores fora do app, com o banco já criado:
+
 ```bash
 cd src
-python -m collect.pydriller_collect    # commits, Bus Factor, churn relativo, autores/mês
+python -m collect.pydriller_collect    # commits, Bus Factor, churn relativo, autores por mês
 python -m collect.github_metrics       # TTFR, issues, releases, contribuidores
 ```
 
+## Endpoints
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/repos` | Cadastra um repositório do usuário |
+| PUT | `/repos/<id>` | Edita um repositório |
+| GET | `/api/repos` | Lista os repositórios em JSON (polling do dashboard) |
+| GET | `/api/repo/<id>/resumo` | Série, autores, métricas, curva, histórico do score e score |
+| GET | `/api/repo/<id>/github` | Contribuidores e releases (API ao vivo) |
+| GET | `/api/repo/<id>/periodos` | Períodos coletados do repositório (base da comparação entre versões) |
+| GET | `/api/coleta/status` | Estado da coleta |
+| GET | `/comparar?ids=1,2` | Comparação lado a lado |
+| GET | `/snapshot` | Tabela consolidada por período coletado |
+| GET | `/snapshot.csv?periodo=AAAA-MM-DD\|AAAA-MM-DD` | Exporta o snapshot em CSV |
+| GET | `/snapshot.xml?periodo=AAAA-MM-DD\|AAAA-MM-DD` | Exporta o snapshot em XML |
+| GET | `/repo/<id>/relatorio` | Relatório `.docx` (score, métricas, gráficos) |
+| POST | `/logout` | Encerra a sessão (só aceita POST) |
+| GET | `/api/health` | Verificação de vida |
+
 ## Métricas
+
 | Métrica | Definição |
 |---------|-----------|
-| Commits | total de commits de autores humanos na janela de coleta |
-| Bus Factor | menor `k` tal que a soma das `k` maiores contribuições > 50% do total |
-| TTFR | mediana do tempo até a primeira resposta humana (exclui PRs e bots) |
-| Churn relativo | (linhas add + del no período) / LOC do repositório |
-| Cadência de Releases | releases publicados por mês na janela (`R / M`) |
-| Contribuidores ativos | pessoas distintas que abriram ou comentaram issues no período (bots fora) |
-| Curva de concentração | % dos commits do mês feitos pelo top-1 e top-5 de autores |
-| Score (0–100) | média das componentes normalizadas: atividade (teto 1000 commits), Bus Factor (teto 5), responsividade (piso 7 dias de TTFR) e estabilidade (piso de churn 1,5); métricas ausentes não entram na média |
+| Commits | Total de commits de autores humanos na janela de coleta |
+| Bus Factor | Menor `k` tal que a soma das `k` maiores contribuições passa de 50% do total |
+| TTFR | Mediana do tempo até a primeira resposta humana (exclui PRs e bots) |
+| Churn relativo | (linhas adicionadas + removidas no período) / LOC do repositório |
+| Cadência de releases | Releases publicados por mês na janela (`R / M`) |
+| Contribuidores ativos | Pessoas distintas que abriram ou comentaram issues no período (sem bots) |
+| Curva de concentração | Percentual dos commits do mês feitos pelo top-1 e pelo top-5 de autores |
+| Score (0–100) | Média das componentes normalizadas, descritas abaixo |
 
-Nota metodológica: commits e Bus Factor consideram somente autores humanos -
-contas automatizadas (bots, como `dependabot[bot]`) são filtradas na coleta,
-conforme a prática dos estudos de Truck Factor.
+O score é a média de quatro componentes: atividade (teto de 1000 commits), Bus Factor (teto de 5), responsividade (piso de 7 dias de TTFR) e estabilidade (piso de churn de 1,5). Métricas ausentes não entram na média.
+
+Commits e Bus Factor consideram somente autores humanos. Contas automatizadas, como `dependabot[bot]`, são filtradas na coleta, seguindo a prática dos estudos de Truck Factor.
+
+## Estrutura do projeto
+
+```
+fap/
+├── requirements.txt
+├── setup.py                    # instalação guiada (venv, .env, banco, schema)
+├── rodar.bat                   # sobe o PostgreSQL e inicia o app (Windows)
+├── Dockerfile                  # python:3.12-slim + git para o PyDriller
+├── docker-compose.yml          # app + postgres:16 com volumes
+├── .env.example                # copie para .env e preencha
+├── conftest.py, pytest.ini     # raiz da suíte de testes
+├── .github/workflows/lint.yml  # CI: pyflakes + pytest (PostgreSQL)
+├── sql/schema.sql              # idempotente: métricas, usuários e vínculos
+├── data/                       # clones dos repositórios minerados (gitignored)
+├── src/
+│   ├── config.py               # carrega as variáveis do .env
+│   ├── database.py             # pool de conexões, ETL (upsert) e init_schema()
+│   ├── status.py               # estado da coleta em background (thread-safe)
+│   ├── analises.py             # curva de concentração e score de sustentabilidade
+│   ├── relatorio.py            # relatório .docx (python-docx + matplotlib)
+│   ├── app.py                  # Flask: OAuth, repos, APIs, snapshot e coleta
+│   └── collect/
+│       ├── pydriller_collect.py   # code churn, Bus Factor, churn relativo,
+│       │                          # agregações por dia, mês e autor
+│       └── github_metrics.py      # TTFR (mediana, sem bots), issues, releases
+│                                  # e contribuidores (com retry e token)
+├── templates/
+│   ├── base.html               # topo (marca e usuário) e rodapé
+│   ├── login.html              # cartão de autenticação
+│   ├── meus_repos.html         # formulário e lista com status/polling
+│   ├── repo_detalhe.html       # abas GitHub | Análises FAP e relatório
+│   ├── comparar.html           # comparação lado a lado
+│   └── snapshot.html           # snapshot consolidado por período
+├── tests/                      # 104 testes: rotas, coletores, banco, score
+└── static/
+    ├── css/style.css           # tokens de design (IBM Plex, tema claro)
+    └── js/
+        ├── repos.js            # cadastro, edição, polling e seleção para comparar
+        ├── comparar.js         # gráficos da comparação
+        ├── repo_detalhe.js     # gráficos Plotly, score e abas
+        └── plotly-2.35.2.min.js # Plotly local (funciona offline)
+```
 
 ## Testes
+
 ```bash
-pytest -q        # na raiz do projeto (precisa do PostgreSQL; CI roda os mesmos)
+pytest -q
 ```
-Suíte (104 testes): score/curva (matemática pura), utilitários dos coletores,
-rede mockada com `responses` (paginação, PRs, bots, rate limit, releases),
-helpers do banco (criptografia do token e upserts), autocoleta, relatório
-`.docx` e snapshot, e smoke das rotas com login simulado.
+
+Rode na raiz do projeto. Os testes precisam do PostgreSQL, e o CI executa os mesmos.
+
+A suíte tem 104 testes: score e curva (matemática pura), utilitários dos coletores, rede mockada com `responses` (paginação, PRs, bots, rate limit, releases), helpers do banco (criptografia do token e upserts), autocoleta, relatório `.docx`, snapshot e smoke das rotas com login simulado.
 
 ## Licença
+
 Distribuído sob a licença [MIT](LICENSE).
