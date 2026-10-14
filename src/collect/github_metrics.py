@@ -1,7 +1,7 @@
 """Métricas sociais via API do GitHub: TTFR e demais indicadores de sustentabilidade."""
 import logging
 import time
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 
 import requests
 import pandas as pd
@@ -66,18 +66,33 @@ def _parse_owner_repo(url):
     return parts[-2], parts[-1]
 
 
+def _cursor_proxima_pagina(headers):
+    """Cursor 'after' do rel=next do header Link (unquoted).
+
+    O GitHub recusa paginacao por page=N em conjuntos grandes (HTTP 422)
+    e exige seguir o Link header com paginacao por cursor.
+    """
+    for parte in (headers.get("Link") or "").split(","):
+        if 'rel="next"' not in parte:
+            continue
+        trecho = parte.split(";")[0].strip()
+        if "after=" in trecho:
+            return unquote(trecho.split("after=", 1)[1].rstrip(">").split("&")[0])
+    return None
+
+
 def buscar_issues(owner, nome_repo, desde, token=None):
+    """Lista as issues do periodo seguindo a paginacao por cursor do GitHub."""
     issues = []
-    page = 1
-    params = {"state": "all", "since": desde, "per_page": 100, "page": page}
+    params = {"state": "all", "since": desde, "per_page": 100}
     while True:
-        data = _get(f"{API_BASE}/repos/{owner}/{nome_repo}/issues",
-                    params, token=token).json()
-        issues.extend(data)
-        if len(data) < 100:
+        resp = _get(f"{API_BASE}/repos/{owner}/{nome_repo}/issues",
+                    params, token=token)
+        issues.extend(resp.json())
+        cursor = _cursor_proxima_pagina(resp.headers)
+        if not cursor:
             break
-        page += 1
-        params["page"] = page
+        params["after"] = cursor
     return issues
 
 

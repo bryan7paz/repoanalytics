@@ -6,7 +6,8 @@ e contagem de releases dentro da janela.
 import responses
 from responses import registries
 
-from collect.github_metrics import (API_BASE, _get, _primeiro_comentario_detalhe,
+from collect.github_metrics import (API_BASE, _cursor_proxima_pagina, _get,
+                                    _primeiro_comentario_detalhe,
                                     buscar_issues, buscar_releases,
                                     calcular_ttfr_mediano)
 
@@ -23,15 +24,34 @@ def _issue(numero, state="open", criada="2026-09-01T10:00:00Z", pr=False):
 
 @responses.activate(registry=registries.OrderedRegistry)
 def test_buscar_issues_pagina_ate_acabar():
-    pagina1 = [_issue(i) for i in range(1, 101)]   # 100 -> continua
-    pagina2 = [_issue(101, state="closed")]         # < 100 -> para
-    responses.get(f"{API_BASE}/repos/{OWNER}/{REPO}/issues", json=pagina1)
+    pagina1 = [_issue(i) for i in range(1, 101)]   # 100 + Link next -> continua
+    pagina2 = [_issue(101, state="closed")]         # sem Link next -> para
+    proxima = (f"{API_BASE}/repos/{OWNER}/{REPO}/issues"
+               "?per_page=100&after=c2VnMA==")
+    responses.get(f"{API_BASE}/repos/{OWNER}/{REPO}/issues", json=pagina1,
+                  headers={"Link": f'<{proxima}>; rel="next"'})
     responses.get(f"{API_BASE}/repos/{OWNER}/{REPO}/issues", json=pagina2)
 
     issues = buscar_issues(OWNER, REPO, "2026-03-01T00:00:00Z")
 
     assert len(issues) == 101
     assert issues[-1]["number"] == 101
+    # o GitHub exige cursor (after=) - nunca paginacao por page=
+    assert "&page=" not in responses.calls[0].request.url
+    assert "after=" in responses.calls[1].request.url
+
+
+def test_cursor_proxima_pagina_parseia_link():
+    headers = {
+        "Link": ('<https://api.github.com/x?per_page=100&after=abc%3D%3D>; '
+                 'rel="next", '
+                 '<https://api.github.com/x?per_page=100&before=zzz>; '
+                 'rel="prev"'),
+    }
+    assert _cursor_proxima_pagina(headers) == "abc=="
+    assert _cursor_proxima_pagina({}) is None
+    assert _cursor_proxima_pagina(
+        {"Link": '<https://api.github.com/x>; rel="last"'}) is None
 
 
 @responses.activate
