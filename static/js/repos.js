@@ -40,6 +40,7 @@ function linhaEdicao(r) {
                            placeholder="https://github.com/owner/repo" aria-label="URL do repositório">
                     <button class="btn btn-primary btn-salvar" type="submit">salvar</button>
                     <button class="btn btn-ghost btn-cancelar" type="button">cancelar</button>
+                    <button class="btn btn-danger btn-apagar" type="button">apagar</button>
                 </form>
             </td>
         </tr>`;
@@ -117,6 +118,23 @@ function render() {
         form.querySelector(".btn-cancelar").addEventListener("click", () => {
             editandoId = null;
             render();
+        });
+        form.querySelector(".btn-apagar").addEventListener("click", async () => {
+            const nome = form.querySelector(".edit-nome").value || "este repositório";
+            const btnApagar = form.querySelector(".btn-apagar");
+            if (!confirm(`Apagar "${nome}"? Os dados coletados serão removidos.`)) return;
+            btnApagar.disabled = true;
+            try {
+                const resp = await fetch("/repos/" + form.dataset.id, { method: "DELETE" });
+                const dados = await resp.json();
+                if (!resp.ok) throw new Error(dados.erro || "Falha ao apagar.");
+                editandoId = null;
+                await recarregarRepos();
+                await atualizarStatus();
+            } catch (err) {
+                alert(err.message);
+                btnApagar.disabled = false;
+            }
         });
     });
 }

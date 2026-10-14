@@ -240,6 +240,19 @@ def test_adicionar_repo_sem_url(client, logado):
     assert resp.status_code == 400
 
 
+def test_apagar_repo(client, repo_logado):
+    assert client.delete(f"/repos/{repo_logado}").status_code == 200
+    assert client.get("/api/repos").get_json() == []
+
+
+def test_apagar_repo_inexistente_403(client, logado):
+    assert client.delete("/repos/9999999").status_code == 403
+
+
+def test_delete_de_repos_tambem_protegido(client):
+    assert client.delete("/repos/1").status_code == 302
+
+
 @pytest.fixture()
 def repo_teste(logado):
     """Repo vinculado ao usuário logado (removido do BD ao fim do teste)."""
@@ -278,10 +291,6 @@ def test_editar_repo_sem_dados(client, logado, repo_teste):
 
 def test_editar_repo_de_outro_usuario(client, logado):
     assert client.put("/repos/9999999", json={"nome": "X"}).status_code == 403
-
-
-def test_delete_repo_foi_removido(client, logado, repo_teste):
-    assert client.delete(f"/repos/{repo_teste}").status_code == 405
 
 
 def test_api_repos_tem_visao_macro(client, logado, repo_teste):

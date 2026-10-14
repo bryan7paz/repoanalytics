@@ -146,6 +146,7 @@ python -m collect.github_metrics       # TTFR, issues, releases, contribuidores
 |--------|------|-----------|
 | POST | `/repos` | Cadastra um repositório do usuário |
 | PUT | `/repos/<id>` | Edita um repositório |
+| DELETE | `/repos/<id>` | Apaga o repositório (em cascade com as métricas), se não sobrar outro dono |
 | GET | `/api/repos` | Lista os repositórios em JSON (polling do dashboard) |
 | GET | `/api/repo/<id>/resumo` | Série, autores, métricas, curva, histórico do score e score |
 | GET | `/api/repo/<id>/github` | Contribuidores e releases (API ao vivo) |

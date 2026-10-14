@@ -24,6 +24,7 @@ from database import (connection, init_schema, repositorios_pendentes,
                       repositorio_por_id, ultimo_periodo, usuario_dono,
                       upsert_usuario, upsert_repositorio,
                       link_usuario_repositorio,
+                      desvincular_e_limpar,
                       buscar_usuario, marcar_coletado,
                       resumo_repos_usuario, renomear_exibicao,
                       atualizar_url_repo, marcar_pendente, autores_linhas)
@@ -371,6 +372,20 @@ def editar_repo(id_repositorio):
                          name=f"coleta-repo-{id_repositorio}",
                          daemon=True).start()
     return jsonify(ok=True, re_coletando=re_coletando)
+
+
+@app.route("/repos/<int:id_repositorio>", methods=["DELETE"])
+@login_required
+def remover_repo(id_repositorio):
+    """Desvincula o repositório do usuário; apaga de vez se não sobrar dono.
+
+    Sem donos restantes, o Repositorio é excluído em cascade junto com
+    todas as métricas coletadas.
+    """
+    if not usuario_dono(current_user.id, id_repositorio):
+        abort(403)
+    apagado = desvincular_e_limpar(current_user.id, id_repositorio)
+    return jsonify(ok=True, apagado=apagado)
 
 
 # ---------------------------------------------------------------------------

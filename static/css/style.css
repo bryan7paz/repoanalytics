@@ -260,6 +260,8 @@ body {
 .btn-primary:hover { background: #0c625b; border-color: #0c625b; }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--ink-3); }
 .btn-ghost:hover { color: var(--down); border-color: transparent; }
+.btn-danger { background: transparent; border-color: transparent; color: var(--down); }
+.btn-danger:hover { border-color: var(--down); }
 .btn-lg { padding: var(--space-xs) var(--space-m); font-size: var(--step-0); }
 .form-sair { display: inline; margin: 0; }
 
