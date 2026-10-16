@@ -52,21 +52,36 @@ def _ler_env():
     return dados
 
 
+def _token_util(valor):
+    """Token só conta se existir e não for o placeholder do .env.example."""
+    return bool(valor and valor.strip() != "coloque_seu_token_aqui")
+
+
 def passo_python():
     print("\n1) Python")
     v = sys.version_info[:2]
     if (3, 9) <= v <= (3, 13):
         _ok(f"Python {v[0]}.{v[1]} suportado")
     else:
-        _pendente(f"Python {v[0]}.{v[1]} detectado — as dependências presas no "
-                  "requirements.txt não têm pacotes prontos para essa versão; "
-                  "use Python 3.12 ou 3.13 (https://www.python.org/downloads/)")
+        _pendente(f"Python {v[0]}.{v[1]} detectado — o projeto é testado no "
+                  "3.12/3.13; se o app não iniciar, instale o 3.13 "
+                  "(https://www.python.org/downloads/), apague a pasta fap_env "
+                  "e rode este script de novo")
 
 
 def passo_venv():
     print("\n2) Ambiente virtual")
     if VENV_PY.exists():
-        _ok(f"venv já existe ({VENV.name})")
+        atual = "%d.%d" % sys.version_info[:2]
+        r = _rodar([str(VENV_PY), "-c",
+                    "import sys; print('%d.%d' % sys.version_info[:2])"])
+        versao_venv = (r.stdout or "").strip()
+        if r.returncode == 0 and versao_venv and versao_venv != atual:
+            _pendente(f"venv existe mas foi criado com o Python {versao_venv} "
+                      f"(este script está rodando no {atual}) — apague a pasta "
+                      "fap_env e rode este script de novo")
+        else:
+            _ok(f"venv já existe ({VENV.name})")
         return
     r = _rodar([sys.executable, "-m", "venv", str(VENV)])
     if r.returncode == 0:
@@ -113,12 +128,12 @@ def passo_env():
             f.write(f"SESSION_SECRET={secrets.token_hex(32)}\n")
         _ok("SESSION_SECRET gerado e salvo no .env")
     env = _ler_env()
-    if env.get("GITHUB_TOKEN"):
+    if _token_util(env.get("GITHUB_TOKEN")):
         _ok("GITHUB_TOKEN configurado")
     else:
-        _pendente("GITHUB_TOKEN ausente — a coleta de TTFR não fecha sem ele "
-                  "(60 req/h). Gere em https://github.com/settings/tokens "
-                  "e cole no .env")
+        _pendente("GITHUB_TOKEN ausente ou ainda no placeholder — sem token a "
+                  "coleta de TTFR não fecha (60 req/h). Gere em "
+                  "https://github.com/settings/tokens e cole no .env")
 
 
 def passo_postgres():

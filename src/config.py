@@ -21,6 +21,12 @@ DB_CONFIG = {
     "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "10")),
 }
 
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+def _token_efetivo(valor):
+    """Placeholder do .env.example não é token: vira '' (chamadas anônimas)."""
+    valor = valor.strip()
+    return "" if valor == "coloque_seu_token_aqui" else valor
+
+
+GITHUB_TOKEN = _token_efetivo(os.getenv("GITHUB_TOKEN", ""))
 
 MESES_ANALISE = int(os.getenv("MESES_ANALISE", "6"))

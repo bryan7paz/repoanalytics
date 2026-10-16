@@ -58,7 +58,7 @@ Depois é só abrir o `rodar.bat` (sobe o postgres se ele tiver caído e inicia 
 python setup.py
 ```
 
-Veja o que o script faz em [Começando](#começando). Para rodar depois com duplo clique, use o `rodar.bat`.
+Veja o que o script faz em [Começando](#começando). Para rodar depois, dê duplo clique no `rodar.bat`; no terminal use `.\rodar.bat` (no PowerShell o `.\` é obrigatório, no CMD funciona direto).
 
 ### Manual
 
