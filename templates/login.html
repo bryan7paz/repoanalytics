@@ -26,9 +26,11 @@
             Entrar (modo desenvolvimento)
         </a>
         <p class="auth-nota">
-            OAuth não configurado. Para liberar o login com GitHub, crie um
-            OAuth App em <code>github.com/settings/developers</code> e preencha
-            <code>GITHUB_CLIENT_ID</code> e <code>GITHUB_CLIENT_SECRET</code> no <code>.env</code>.
+            Credenciais do GitHub incompletas no <code>.env</code>: falta o
+            <code>GITHUB_CLIENT_SECRET</code> (o <code>.env.example</code> do projeto
+            já traz o <code>GITHUB_CLIENT_ID</code>). Complete os dois — ou cadastre
+            seu próprio OAuth App em <code>github.com/settings/developers</code> —
+            e reinicie o app.
         </p>
     {% endif %}
 </section>

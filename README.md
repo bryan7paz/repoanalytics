@@ -48,7 +48,7 @@ Depois é só abrir o `rodar.bat` (sobe o postgres se ele tiver caído e inicia 
 - Python 3.12 ou 3.13, com "Add to PATH". Versões mais novas podem falhar ao compilar dependências fixadas no `requirements.txt`.
 - PostgreSQL na porta 5432.
 - Token do GitHub. Na prática é obrigatório: sem ele o limite é de 60 requisições por hora, e o cálculo do TTFR faz uma requisição por issue, então a coleta não termina. Com token o limite é de 5.000 por hora.
-- OAuth App do GitHub (opcional, só para o login real).
+- Login com GitHub: já vem com credenciais embutidas no `.env.example` — nada a configurar (criar um OAuth App próprio é opcional, ver seção "Login com GitHub").
 
 ## Instalação
 
@@ -101,7 +101,7 @@ O compose sobe o app e o PostgreSQL na mesma rede, cria o banco e disponibiliza 
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | sim | Acesso ao PostgreSQL (padrões: localhost, 5432, fap, postgres) |
 | `GITHUB_TOKEN` | na prática, sim | Token pessoal do GitHub. Sem ele a coleta de TTFR não termina |
 | `SESSION_SECRET` | sim | Segredo da sessão Flask e da cifra do token OAuth. Sem ele o token não é armazenado |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | só para login real | Credenciais do OAuth App. Sem elas o `/login` não mostra o botão do GitHub |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | não (já vêm preenchidas) | Credenciais do OAuth App do projeto, embutidas no `.env.example`. Só troque se quiser usar seu próprio OAuth App |
 | `MESES_ANALISE` | não | Janela de análise em meses (padrão: 6) |
 | `MINERACAO_INTERVALO_DIAS` | não | Intervalo da coleta automática em dias (padrão: 7) |
 | `DB_CONNECT_TIMEOUT` | não | Timeout de conexão com o banco em segundos (padrão: 10) |
@@ -110,14 +110,22 @@ O compose sobe o app e o PostgreSQL na mesma rede, cria o banco e disponibiliza 
 
 ### Login com GitHub (OAuth App)
 
+O projeto já vem com um OAuth App cadastrado: o `GITHUB_CLIENT_ID` e o `GITHUB_CLIENT_SECRET` estão no `.env.example`, então quem clona o repositório recebe o botão "Entrar com GitHub" funcionando sem configurar nada (o `setup.py` copia o exemplo para o `.env`).
+
+O callback registrado é `http://127.0.0.1:5000/callback`, que aponta para a máquina de cada pessoa — por isso o mesmo OAuth App serve todos os que baixarem o app localmente.
+
+Para usar seu próprio OAuth App (opcional):
+
 1. Em https://github.com/settings/developers, vá em **OAuth Apps** e clique em **New OAuth App**.
 2. Preencha:
    - Homepage URL: `http://127.0.0.1:5000`
    - Authorization callback URL: `http://127.0.0.1:5000/callback`
-3. Copie o Client ID, gere um Client Secret e cole os dois no `.env`.
-4. Reinicie o app. O botão "Entrar com GitHub" passa a aparecer em `/login`.
+3. Copie o Client ID, gere um Client Secret e substitua os dois no seu `.env`.
+4. Reinicie o app.
 
-Sem o OAuth App configurado, o `/login` mostra "Entrar (modo desenvolvimento)", que entra como o usuário `dev`. Essa rota só existe em localhost e só enquanto o OAuth não estiver configurado.
+Sem as credenciais no `.env`, o `/login` mostra "Entrar (modo desenvolvimento)", que entra como o usuário `dev`. Essa rota só existe em localhost e só enquanto o OAuth não estiver configurado.
+
+Para publicar a FAP em um endereço público, acrescente `https://seu-endereco/callback` na lista de URIs de redirecionamento do OAuth App (cabe até 10) — o mesmo app atende localhost e produção.
 
 ## Executando
 
