@@ -24,6 +24,11 @@ const LAYOUT_BASE = {
     showlegend: false,
 };
 
+// O Plotly MUTA o layout recebido (escreve type/range dentro dos eixos).
+// Nunca compartilhe os objetos xaxis/yaxis entre gráficos: cada newPlot
+// recebe os seus, com tipo explícito - senão o eixo "date" do gráfico de
+// commits contamina os eixos categóricos dos gráficos de barras.
+
 /* ---------------- abas ---------------- */
 document.getElementById("tabs").addEventListener("click", (e) => {
     const btn = e.target.closest(".tab");
@@ -114,7 +119,9 @@ async function carregarResumo() {
             line: { color: PALETA.accent, width: 1.6 },
             fillcolor: "rgba(15,118,110,0.10)",
             hovertemplate: "%{x}<br>%{y} commits<extra></extra>",
-        }], { ...LAYOUT_BASE, height: 300 },
+        }], { ...LAYOUT_BASE, height: 300,
+              xaxis: { ...LAYOUT_BASE.xaxis, type: "date" },
+              yaxis: { ...LAYOUT_BASE.yaxis, type: "linear" } },
            { responsive: true, displayModeBar: false });
     } else {
         Plotly.purge("graf-commits");
@@ -130,7 +137,8 @@ async function carregarResumo() {
             marker: { color: PALETA.accent },
             hovertemplate: "%{y}: %{x} commits<extra></extra>",
         }], { ...LAYOUT_BASE, height: Math.max(220, a.length * 34), bargap: 0.35,
-              xaxis: { ...LAYOUT_BASE.xaxis, title: "" },
+              xaxis: { ...LAYOUT_BASE.xaxis, type: "linear", title: "" },
+              yaxis: { ...LAYOUT_BASE.yaxis, type: "category" },
               margin: { t: 14, r: 16, b: 40, l: 140 } },
            { responsive: true, displayModeBar: false });
     } else {
@@ -202,7 +210,8 @@ function renderEvolucao(historico) {
         hovertemplate: "período até %{x}<br>score: %{y}<extra></extra>",
     }], {
         ...LAYOUT_BASE, height: 300,
-        yaxis: { ...LAYOUT_BASE.yaxis, range: [0, 105], ticksuffix: "" },
+        xaxis: { ...LAYOUT_BASE.xaxis, type: "date" },
+        yaxis: { ...LAYOUT_BASE.yaxis, type: "linear", range: [0, 105], ticksuffix: "" },
     }, { responsive: true, displayModeBar: false });
 }
 
@@ -237,7 +246,8 @@ function renderEquipe(autores) {
             hovertemplate: "%{y}<br>reescritas: %{x} linhas<extra></extra>",
         },
     ], { ...LAYOUT_BASE, height: Math.max(220, a.length * 40), bargap: 0.25,
-          xaxis: { ...LAYOUT_BASE.xaxis, title: "linhas" },
+          xaxis: { ...LAYOUT_BASE.xaxis, type: "linear", title: "linhas" },
+          yaxis: { ...LAYOUT_BASE.yaxis, type: "category" },
           showlegend: true,
           legend: { orientation: "h", x: 0, y: 1.14, font: { color: "#55504a" } },
           margin: { t: 14, r: 16, b: 40, l: 140 } },
@@ -266,7 +276,8 @@ function renderCurva(curva) {
         },
     ], {
         ...LAYOUT_BASE, height: 340,
-        yaxis: { ...LAYOUT_BASE.yaxis, ticksuffix: "%", range: [0, 105] },
+        xaxis: { ...LAYOUT_BASE.xaxis, type: "category" },
+        yaxis: { ...LAYOUT_BASE.yaxis, type: "linear", ticksuffix: "%", range: [0, 105] },
         showlegend: true,
         legend: { orientation: "h", x: 0, y: 1.14, font: { color: "#55504a" } },
     }, { responsive: true, displayModeBar: false });
