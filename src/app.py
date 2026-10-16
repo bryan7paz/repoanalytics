@@ -578,6 +578,40 @@ def _totais_periodo(id_repositorio, inicio):
             "linhas_del": int(r["del"])}
 
 
+def _autores_por_periodo(id_repositorio, inicio, fim=None,
+                         fallback_mensal=False):
+    """Top 5 de commits por autor na janela (Metrica_Autor_Dia).
+
+    `fallback_mensal` repete a consulta em Metrica_Autor_Mensal quando a
+    diária não tem nada no período e não há intervalo explícito.
+    """
+    with connection() as conn:
+        autores = pd.read_sql(
+            """
+            SELECT autor, SUM(commits) AS commits
+            FROM Metrica_Autor_Dia
+            WHERE id_repositorio = %s AND dia >= %s
+              AND (%s IS NULL OR dia <= %s)
+            GROUP BY autor ORDER BY commits DESC LIMIT 5
+            """,
+            conn, params=(id_repositorio, inicio, fim, fim),
+        )
+        if autores.empty and fallback_mensal:
+            autores = pd.read_sql(
+                """
+                SELECT autor, SUM(commits) AS commits
+                FROM Metrica_Autor_Mensal
+                WHERE id_repositorio = %s AND mes >= %s
+                GROUP BY autor ORDER BY commits DESC LIMIT 5
+                """,
+                conn, params=(id_repositorio, inicio),
+            )
+    return [
+        {"autor": r.autor, "commits": int(r.commits)}
+        for r in autores.itertuples()
+    ]
+
+
 def _dados_comparacao(id_repositorio):
     """Pacote completo de um repo para a tela de comparação."""
     repo = repositorio_por_id(id_repositorio)
@@ -666,27 +700,8 @@ def api_repo_resumo(id_repositorio):
     else:
         p, inicio, janela = None, inicio_padrao, janela_padrao
     serie = _serie_diaria(id_repositorio, inicio, fim)
-    with connection() as conn:
-        autores = pd.read_sql(
-            """
-            SELECT autor, SUM(commits) AS commits
-            FROM Metrica_Autor_Dia
-            WHERE id_repositorio = %s AND dia >= %s
-              AND (%s IS NULL OR dia <= %s)
-            GROUP BY autor ORDER BY commits DESC LIMIT 5
-            """,
-            conn, params=(id_repositorio, inicio, fim, fim),
-        )
-        if autores.empty and p is None:
-            autores = pd.read_sql(
-                """
-                SELECT autor, SUM(commits) AS commits
-                FROM Metrica_Autor_Mensal
-                WHERE id_repositorio = %s AND mes >= %s
-                GROUP BY autor ORDER BY commits DESC LIMIT 5
-                """,
-                conn, params=(id_repositorio, inicio),
-            )
+    autores = _autores_por_periodo(id_repositorio, inicio, fim,
+                                   fallback_mensal=p is None)
 
     metricas = _metricas_latest(id_repositorio)
     commits_total = int(serie["commits"].sum()) if not serie.empty else 0
@@ -722,10 +737,7 @@ def api_repo_resumo(id_repositorio):
             {"dia": str(r.dia), "commits": int(r.commits)}
             for r in serie.itertuples()
         ],
-        "autores_periodo": [
-            {"autor": r.autor, "commits": int(r.commits)}
-            for r in autores.itertuples()
-        ],
+        "autores_periodo": autores,
         "autores_linhas": autores_linhas(id_repositorio),
         "curva": analises.curva_concentracao(id_repositorio, inicio_padrao),
         "historico_score": _historico_score(id_repositorio),
@@ -765,6 +777,11 @@ def repo_relatorio(id_repositorio):
     dados = _dados_comparacao(id_repositorio)
     if not dados:
         abort(404)
+    inicio, _ = _janela_exibicao(id_repositorio)
+    dados["autores_periodo"] = _autores_por_periodo(
+        id_repositorio, inicio, fallback_mensal=True)
+    dados["autores_linhas"] = autores_linhas(id_repositorio)
+    dados["historico_score"] = _historico_score(id_repositorio)
     from relatorio import gerar_relatorio
     buf = gerar_relatorio(dados)
     nome = dados["repo"]["nome"].replace(" ", "-")

@@ -35,6 +35,20 @@ def _dados_completos():
                   {"dia": "2026-09-02", "commits": 5}],
         "curva": [{"mes": "2026-08", "top5": 70.0, "top1": 40.0},
                   {"mes": "2026-09", "top5": 60.0, "top1": 30.0}],
+        "autores_periodo": [{"autor": "ana", "commits": 40},
+                            {"autor": "bia", "commits": 25}],
+        "autores_linhas": [
+            {"autor": "ana", "commits": 40, "linhas_adicionadas": 900,
+             "linhas_removidas": 300, "linhas_reescritas": 50},
+            {"autor": "bia", "commits": 25, "linhas_adicionadas": 400,
+             "linhas_removidas": 120, "linhas_reescritas": 10},
+        ],
+        "historico_score": [
+            {"periodo_inicio": "2026-03-01", "periodo_fim": "2026-09-01",
+             "score": 72.0},
+            {"periodo_inicio": "2026-04-01", "periodo_fim": "2026-10-01",
+             "score": 80.0},
+        ],
     }
 
 
@@ -51,6 +65,29 @@ def test_relatorio_completo_tem_titulo_e_alerta():
     assert "Relatório FAP - demo" in texto
     tabelas = "\n".join(c.text for t in doc.tables for row in t.rows for c in row.cells)
     assert "risco" in tabelas  # alerta do Bus Factor foi parar no documento
+
+
+def test_relatorio_completo_tem_os_cinco_graficos():
+    buf = gerar_relatorio(_dados_completos())
+    from docx import Document
+    doc = Document(io.BytesIO(buf.getvalue()))
+    texto = "\n".join(p.text for p in doc.paragraphs)
+    for titulo in ("Evolução do score", "Autores no período",
+                   "Quem faz o quê na equipe"):
+        assert titulo in texto
+    # commits, evolução, autores, equipe e curva
+    assert len(doc.inline_shapes) == 5
+
+
+def test_relatorio_evolucao_com_uma_coleta_mostra_nota():
+    dados = _dados_completos()
+    dados["historico_score"] = dados["historico_score"][:1]
+    buf = gerar_relatorio(dados)
+    from docx import Document
+    doc = Document(io.BytesIO(buf.getvalue()))
+    texto = "\n".join(p.text for p in doc.paragraphs)
+    assert "segunda coleta" in texto
+    assert len(doc.inline_shapes) == 4  # sem a linha da evolução
 
 
 @pytest.fixture()

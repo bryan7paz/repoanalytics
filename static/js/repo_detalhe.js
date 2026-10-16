@@ -134,7 +134,8 @@ async function carregarResumo() {
               margin: { t: 14, r: 16, b: 40, l: 140 } },
            { responsive: true, displayModeBar: false });
     } else {
-        Plotly.purge("graf-autores");
+        document.getElementById("graf-autores").innerHTML =
+            '<p class="muted" style="padding:24px">Sem commits por autor neste período - ajuste o período ou faça a coleta primeiro.</p>';
     }
 
     renderMetricas(r.metricas);

@@ -164,7 +164,7 @@ python -m collect.github_metrics       # TTFR, issues, releases, contribuidores
 | GET | `/snapshot` | Tabela consolidada por período coletado |
 | GET | `/snapshot.csv?periodo=AAAA-MM-DD\|AAAA-MM-DD` | Exporta o snapshot em CSV |
 | GET | `/snapshot.xml?periodo=AAAA-MM-DD\|AAAA-MM-DD` | Exporta o snapshot em XML |
-| GET | `/repo/<id>/relatorio` | Relatório `.docx` (score, métricas, gráficos) |
+| GET | `/repo/<id>/relatorio` | Relatório `.docx` (score, métricas e os cinco gráficos) |
 | POST | `/logout` | Encerra a sessão (só aceita POST) |
 | GET | `/api/health` | Verificação de vida |
 
@@ -236,7 +236,7 @@ pytest -q
 
 Rode na raiz do projeto. Os testes precisam do PostgreSQL, e o CI executa os mesmos.
 
-A suíte tem 104 testes: score e curva (matemática pura), utilitários dos coletores, rede mockada com `responses` (paginação, PRs, bots, rate limit, releases), helpers do banco (criptografia do token e upserts), autocoleta, relatório `.docx`, snapshot e smoke das rotas com login simulado.
+A suíte tem 112 testes: score e curva (matemática pura), utilitários dos coletores, rede mockada com `responses` (paginação, PRs, bots, rate limit, releases), helpers do banco (criptografia do token e upserts), autocoleta, relatório `.docx`, snapshot e smoke das rotas com login simulado.
 
 ## Licença
 
