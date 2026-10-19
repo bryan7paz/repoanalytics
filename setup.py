@@ -170,6 +170,13 @@ def passo_banco():
     print("\n7) Banco de dados 'fap'")
     if not _porta_aberta() or not VENV_PY.exists():
         return
+    # O .env nao esta no ambiente deste processo: as credenciais do banco
+    # precisam ser repassadas ao filho, senao ele conecta com senha vazia.
+    env_vars = _ler_env()
+    ambiente = dict(os.environ)
+    for chave in ("DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD"):
+        if env_vars.get(chave):
+            ambiente[chave] = env_vars[chave]
     script = (
         "import os, psycopg2\n"
         "c = psycopg2.connect(host=os.getenv('DB_HOST','localhost'),"
@@ -187,7 +194,7 @@ def passo_banco():
         "    print('banco fap ja existe')\n"
         "c.close()\n"
     )
-    r = _rodar([str(VENV_PY), "-c", script], cwd=str(RAIZ))
+    r = _rodar([str(VENV_PY), "-c", script], cwd=str(RAIZ), env=ambiente)
     if r.returncode == 0:
         _ok((r.stdout or "banco pronto").strip())
     else:
