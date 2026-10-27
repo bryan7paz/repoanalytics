@@ -1,4 +1,4 @@
-﻿const PALETA = { accent: "#0f766e", tinta: "#334155", ocre: "#b45309", ink3: "#8b857c" };
+const PALETA = { accent: "#0f766e", tinta: "#334155", ocre: "#b45309", ink3: "#8b857c" };
 
 let PERIODO_RESUMO = "";
 
@@ -25,9 +25,9 @@ const LAYOUT_BASE = {
 };
 
 // O Plotly MUTA o layout recebido (escreve type/range dentro dos eixos).
-// Nunca compartilhe os objetos xaxis/yaxis entre grÃ¡ficos: cada newPlot
-// recebe os seus, com tipo explÃ­cito - senÃ£o o eixo "date" do grÃ¡fico de
-// commits contamina os eixos categÃ³ricos dos grÃ¡ficos de barras.
+// Nunca compartilhe os objetos xaxis/yaxis entre gráficos: cada newPlot
+// recebe os seus, com tipo explícito - senão o eixo "date" do gráfico de
+// commits contamina os eixos categóricos dos gráficos de barras.
 
 /* ---------------- abas ---------------- */
 document.getElementById("tabs").addEventListener("click", (e) => {
@@ -38,7 +38,7 @@ document.getElementById("tabs").addEventListener("click", (e) => {
     document.getElementById("aba-fap").hidden = btn.dataset.aba !== "fap";
 });
 
-/* ---------------- seletor de perÃ­odo ---------------- */
+/* ---------------- seletor de período ---------------- */
 function marcarAtivo(alvo) {
     document.querySelectorAll("#seletor-periodo .chip[data-periodo]")
         .forEach((b) => b.classList.toggle("active", b === alvo));
@@ -75,7 +75,7 @@ document.getElementById("periodo-aplicar").addEventListener("click", async () =>
         return;
     }
     if (ini > fim) {
-        badge.textContent = "inÃ­cio depois do fim";
+        badge.textContent = "início depois do fim";
         badge.className = "badge badge-amber";
         return;
     }
@@ -87,8 +87,8 @@ document.getElementById("periodo-aplicar").addEventListener("click", async () =>
 function renderJanela(janela) {
     const el = document.getElementById("seletor-janela");
     if (!el) return;
-    if (janela && janela.rotulo) el.textContent = `Â· ${janela.rotulo}`;
-    else if (janela && janela.inicio) el.textContent = `Â· ${janela.inicio} â†’ ${janela.fim}`;
+    if (janela && janela.rotulo) el.textContent = `· ${janela.rotulo}`;
+    else if (janela && janela.inicio) el.textContent = `· ${janela.inicio} → ${janela.fim}`;
     else el.textContent = "";
 }
 
@@ -100,7 +100,7 @@ async function carregarResumo() {
     renderJanela(r.janela);
 
     const badge = document.getElementById("badge-status");
-    badge.textContent = r.coletando ? "coletandoâ€¦" : (r.metricas ? "dados prontos" : "sem dados");
+    badge.textContent = r.coletando ? "coletando…" : (r.metricas ? "dados prontos" : "sem dados");
     badge.className = "badge " + (r.coletando ? "badge-amber" : (r.metricas ? "badge-green" : "badge-gray"));
 
     // KPIs
@@ -110,7 +110,7 @@ async function carregarResumo() {
     kpis[2].textContent = fmtNum(r.linhas_del);
     document.getElementById("kpi-autores").textContent = fmtNum(r.autores_periodo.length);
 
-    // grÃ¡fico de commits
+    // gráfico de commits
     if (r.serie.length) {
         Plotly.newPlot("graf-commits", [{
             x: r.serie.map(s => s.dia),
@@ -127,7 +127,7 @@ async function carregarResumo() {
         Plotly.purge("graf-commits");
     }
 
-    // autores no perÃ­odo
+    // autores no período
     if (r.autores_periodo.length) {
         const a = r.autores_periodo.slice().reverse();
         Plotly.newPlot("graf-autores", [{
@@ -143,7 +143,7 @@ async function carregarResumo() {
            { responsive: true, displayModeBar: false });
     } else {
         document.getElementById("graf-autores").innerHTML =
-            '<p class="muted" style="padding:24px">Sem commits por autor neste perÃ­odo - ajuste o perÃ­odo ou faÃ§a a coleta primeiro.</p>';
+            '<p class="muted" style="padding:24px">Sem commits por autor neste período - ajuste o período ou faça a coleta primeiro.</p>';
     }
 
     renderMetricas(r.metricas);
@@ -153,7 +153,7 @@ async function carregarResumo() {
     renderEquipe(r.autores_linhas);
 }
 
-/* ---------------- mÃ©tricas ---------------- */
+/* ---------------- métricas ---------------- */
 function renderMetricas(m) {
     const box = document.getElementById("metricas");
     const vals = box.querySelectorAll(".kpi-val");
@@ -162,11 +162,11 @@ function renderMetricas(m) {
         periodo.textContent = "ainda sem coleta";
         return;
     }
-    periodo.textContent = `perÃ­odo ${m.periodo_inicio} â†’ ${m.periodo_fim}`;
+    periodo.textContent = `período ${m.periodo_inicio} → ${m.periodo_fim}`;
     vals[0].textContent = m.bus_factor ?? "-";
     vals[1].textContent = m.ttfr != null ? m.ttfr.toFixed(2) + "d" : "-";
     vals[2].textContent = m.churn_relativo != null ? m.churn_relativo.toFixed(3) : "-";
-    vals[3].textContent = m.cadencia_releases != null ? m.cadencia_releases.toFixed(2) + "/mÃªs" : "-";
+    vals[3].textContent = m.cadencia_releases != null ? m.cadencia_releases.toFixed(2) + "/mês" : "-";
     vals[4].textContent = fmtNum(m.issues_abertas);
     vals[5].textContent = fmtNum(m.issues_fechadas);
 }
@@ -188,13 +188,13 @@ function renderScore(score) {
             <div class="score-track"><div class="score-fill${c.alerta ? " score-bad" : ""}" style="width:${c.valor}%"></div></div>
             <span class="score-val">${c.valor.toFixed(0)}</span>
             <span class="score-desc">${esc(c.descricao)}</span>
-            ${c.alerta ? `<span class="score-alerta">âš  ${esc(c.alerta)}</span>` : ""}
+            ${c.alerta ? `<span class="score-alerta">⚠ ${esc(c.alerta)}</span>` : ""}
         </div>`).join("");
-    formula.textContent = "score = mÃ©dia dos componentes normalizados (0â€“100); " +
-        "mÃ©tricas ausentes nÃ£o entram na mÃ©dia.";
+    formula.textContent = "score = média dos componentes normalizados (0–100); " +
+        "métricas ausentes não entram na média.";
 }
 
-/* ---------------- evoluÃ§Ã£o do score ---------------- */
+/* ---------------- evolução do score ---------------- */
 function renderEvolucao(historico) {
     const pontos = (historico || []).filter(h => h.score != null);
     if (pontos.length < 2) {
@@ -207,7 +207,7 @@ function renderEvolucao(historico) {
         y: pontos.map(h => h.score),
         type: "scatter", mode: "lines+markers",
         line: { color: PALETA.accent, width: 2.4 },
-        hovertemplate: "perÃ­odo atÃ© %{x}<br>score: %{y}<extra></extra>",
+        hovertemplate: "período até %{x}<br>score: %{y}<extra></extra>",
     }], {
         ...LAYOUT_BASE, height: 380,
         xaxis: { ...LAYOUT_BASE.xaxis, type: "date" },
@@ -215,11 +215,11 @@ function renderEvolucao(historico) {
     }, { responsive: true, displayModeBar: false });
 }
 
-/* ---------------- quem faz o quÃª na equipe ---------------- */
+/* ---------------- quem faz o quê na equipe ---------------- */
 function renderEquipe(autores) {
     if (!autores || !autores.length) {
         document.getElementById("graf-equipe").innerHTML =
-            '<p class="muted" style="padding:24px">Sem estatÃ­sticas por autor ainda - colete os commits primeiro.</p>';
+            '<p class="muted" style="padding:24px">Sem estatísticas por autor ainda - colete os commits primeiro.</p>';
         return;
     }
     const a = autores.slice().reverse();
@@ -254,7 +254,7 @@ function renderEquipe(autores) {
        { responsive: true, displayModeBar: false });
 }
 
-/* ---------------- curva de concentraÃ§Ã£o ---------------- */
+/* ---------------- curva de concentração ---------------- */
 function renderCurva(curva) {
     if (!curva || !curva.length) {
         document.getElementById("graf-curva").innerHTML =
@@ -283,7 +283,7 @@ function renderCurva(curva) {
     }, { responsive: true, displayModeBar: false });
 }
 
-/* ---------------- comparaÃ§Ã£o de versÃµes (perÃ­odos coletados) ---------------- */
+/* ---------------- comparação de versões (períodos coletados) ---------------- */
 let PERIODOS_REPO = [];
 
 async function carregarPeriodos() {
@@ -297,7 +297,7 @@ async function carregarPeriodos() {
     document.getElementById("compara-selects").hidden = false;
     document.getElementById("compara-tabela").hidden = false;
     const ops = PERIODOS_REPO.map((p, i) =>
-        `<option value="${i}">${esc(p.periodo_inicio)} â†’ ${esc(p.periodo_fim)}</option>`
+        `<option value="${i}">${esc(p.periodo_inicio)} → ${esc(p.periodo_fim)}</option>`
     ).join("");
     const selA = document.getElementById("periodo-a");
     const selB = document.getElementById("periodo-b");
@@ -320,7 +320,7 @@ function renderComparacaoPeriodos() {
         ["Bus Factor", a.bus_factor, b.bus_factor, 0],
         ["TTFR (dias)", a.ttfr, b.ttfr, 2],
         ["Churn relativo", a.churn_relativo, b.churn_relativo, 3],
-        ["CadÃªncia releases/mÃªs", a.cadencia, b.cadencia, 2],
+        ["Cadência releases/mês", a.cadencia, b.cadencia, 2],
         ["Contribuidores ativos", a.contribuidores, b.contribuidores, 0],
         ["Issues abertas", a.issues_abertas, b.issues_abertas, 0],
         ["Issues fechadas", a.issues_fechadas, b.issues_fechadas, 0],
@@ -336,9 +336,9 @@ function renderComparacaoPeriodos() {
     document.getElementById("tabela-periodos").innerHTML = `
         <thead><tr>
             <th>Indicador</th>
-            <th class="num">A Â· ${esc(a.periodo_inicio)} â†’ ${esc(a.periodo_fim)}</th>
-            <th class="num">B Â· ${esc(b.periodo_inicio)} â†’ ${esc(b.periodo_fim)}</th>
-            <th class="num">Î” (B âˆ’ A)</th>
+            <th class="num">A · ${esc(a.periodo_inicio)} → ${esc(a.periodo_fim)}</th>
+            <th class="num">B · ${esc(b.periodo_inicio)} → ${esc(b.periodo_fim)}</th>
+            <th class="num">Δ (B − A)</th>
         </tr></thead>
         <tbody>${linhas.map(([rot, va, vb, d]) => `
             <tr>
@@ -392,11 +392,10 @@ carregarPeriodos().catch(() => {
     try {
         const s = await fetch("/api/coleta/status").then(x => x.json());
         if (s.estado === "coletando") {
-            document.getElementById("badge-status").textContent = "coletandoâ€¦";
+            document.getElementById("badge-status").textContent = "coletando…";
             setTimeout(acompanharColeta, 5000);
             return;
         }
         if (s.estado === "concluido") await carregarResumo();
     } catch (e) { /* fim do polling */ }
 })();
-
