@@ -176,7 +176,7 @@ body {
 .table-hint { font-family: var(--font-mono); font-size: var(--step--2); color: var(--ink-3); }
 
 .chart { padding: var(--space-s) var(--space-2xs) var(--space-m); }
-.chart > div { width: 100%; height: 420px; }
+.chart > div { width: 100%; height: 520px; }
 
 /* ---------- table ---------- */
 .table-wrap { overflow-x: auto; }
@@ -482,7 +482,7 @@ body {
   color: var(--ink-3);
 }
 
-.chart-sm { min-height: 240px; padding: var(--space-s); }
+.chart-sm { min-height: 280px; padding: var(--space-s); }
 .painel-duplo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-l); }
 .painel-duplo .panel { margin-bottom: 0; }
 

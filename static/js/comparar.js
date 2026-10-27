@@ -1,4 +1,4 @@
-const PALETA = ["#0f766e", "#b45309", "#334155", "#7c3aed", "#be185d", "#0e7490",
+﻿const PALETA = ["#0f766e", "#b45309", "#334155", "#7c3aed", "#be185d", "#0e7490",
                 "#4d7c0f", "#a16207", "#475569", "#9f1239"];
 
 function esc(str) {
@@ -33,9 +33,9 @@ function renderVazio() {
     ["painel-tabela", "painel-score", "painel-curva"].forEach(id =>
         document.getElementById(id).hidden = vazio);
     if (!vazio) {
-        const nomes = dados.map(d => d.repo.nome).join("  ×  ");
+        const nomes = dados.map(d => d.repo.nome).join("  Ã—  ");
         document.getElementById("comp-alvo").textContent =
-            `${nomes} · último período coletado`;
+            `${nomes} Â· Ãºltimo perÃ­odo coletado`;
     }
     return vazio;
 }
@@ -44,14 +44,14 @@ function renderTabela() {
     const linhas = [
         ["Commits (janela)", d => fmt(d.totais.commits)],
         ["Linhas +", d => fmt(d.totais.linhas_add)],
-        ["Linhas −", d => fmt(d.totais.linhas_del)],
+        ["Linhas âˆ’", d => fmt(d.totais.linhas_del)],
         ["Bus Factor", d => d.metricas && d.metricas.bus_factor != null ? d.metricas.bus_factor : "-"],
         ["TTFR (mediana, dias)", d => d.metricas ? fmt(d.metricas.ttfr, 2) : "-"],
         ["Churn relativo", d => d.metricas ? fmt(d.metricas.churn_relativo, 3) : "-"],
-        ["Cadência (releases/mês)", d => d.metricas ? fmt(d.metricas.cadencia_releases, 2) : "-"],
+        ["CadÃªncia (releases/mÃªs)", d => d.metricas ? fmt(d.metricas.cadencia_releases, 2) : "-"],
         ["Issues abertas", d => d.metricas ? fmt(d.metricas.issues_abertas) : "-"],
         ["Issues fechadas", d => d.metricas ? fmt(d.metricas.issues_fechadas) : "-"],
-        ["Score (0–100)", d => d.score && d.score.score != null ? fmt(d.score.score, 1) : "-"],
+        ["Score (0â€“100)", d => d.score && d.score.score != null ? fmt(d.score.score, 1) : "-"],
     ];
     const cabecalho = `<tr><th>Indicador</th>${dados.map(d =>
         `<th class="num">${esc(d.repo.nome)}</th>`).join("")}</tr>`;
@@ -76,7 +76,7 @@ function renderScore() {
         marker: { color: comScore.map((d, i) => PALETA[i % PALETA.length]) },
         hovertemplate: "%{x}<br>score: %{y}<extra></extra>",
     }], {
-        ...BASE_LAYOUT, height: 320,
+        ...BASE_LAYOUT, height: 400,
         yaxis: { ...BASE_LAYOUT.yaxis, range: [0, 105] },
     }, { responsive: true, displayModeBar: false });
 }
@@ -98,7 +98,7 @@ function renderCurvas() {
         return;
     }
     Plotly.newPlot("graf-curva-comp", traces, {
-        ...BASE_LAYOUT, height: 340,
+        ...BASE_LAYOUT, height: 420,
         yaxis: { ...BASE_LAYOUT.yaxis, ticksuffix: "%", range: [0, 105] },
         showlegend: true,
         legend: { orientation: "h", x: 0, y: 1.14, font: { color: "#55504a" } },
@@ -110,3 +110,4 @@ if (!renderVazio()) {
     renderScore();
     renderCurvas();
 }
+
